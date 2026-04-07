@@ -1,6 +1,5 @@
 "use client";
 
-import { createWalletTransactionSigner } from "@solana/client";
 import {
   useSendTransaction,
   useSolanaClient,
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { truncateAddress } from "@/lib/format";
 import type { PreparedAdminApproval } from "@/lib/solana/admin-approval";
 import { buildAdminApprovalTransactionPlan } from "@/lib/solana/admin-approval-transaction";
+import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
 import type { AdminReviewDetailPageData } from "@/server/vaults/authenticated";
 
 type AdminApprovalRailProps = {
@@ -115,7 +115,7 @@ export function AdminApprovalRail({
         );
       }
 
-      const wrappedSigner = createWalletTransactionSigner(wallet, {
+      const wrappedSigner = createPreferredWalletTransactionSigner(wallet, {
         commitment: "confirmed",
       });
       const plan = await buildAdminApprovalTransactionPlan({
@@ -127,6 +127,8 @@ export function AdminApprovalRail({
         authority: wrappedSigner.signer,
         feePayer: wrappedSigner.signer,
         instructions: plan.instructions,
+        prepareTransaction: false,
+        version: "legacy",
       });
 
       setIsPreparing(false);

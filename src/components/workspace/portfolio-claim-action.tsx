@@ -1,6 +1,5 @@
 "use client";
 
-import { createWalletTransactionSigner } from "@solana/client";
 import {
   useSendTransaction,
   useSolanaClient,
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { truncateAddress } from "@/lib/format";
 import { buildPortfolioClaimTransactionPlan } from "@/lib/solana/vault-live-action-transaction";
 import type { PortfolioClaimBundle } from "@/lib/solana/vault-live-actions";
+import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
 import type { PortfolioHolding } from "@/server/vaults/authenticated-read-model/types";
 
 type PortfolioClaimActionProps = {
@@ -100,7 +100,7 @@ export function PortfolioClaimAction({
         );
       }
 
-      const wrappedSigner = createWalletTransactionSigner(wallet, {
+      const wrappedSigner = createPreferredWalletTransactionSigner(wallet, {
         commitment: "confirmed",
       });
       const plan = await buildPortfolioClaimTransactionPlan({
@@ -112,6 +112,8 @@ export function PortfolioClaimAction({
         authority: wrappedSigner.signer,
         feePayer: wrappedSigner.signer,
         instructions: plan.instructions,
+        prepareTransaction: false,
+        version: "legacy",
       });
 
       setSubmittedSignature(nextSignature.toString());

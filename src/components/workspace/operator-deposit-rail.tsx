@@ -1,6 +1,5 @@
 "use client";
 
-import { createWalletTransactionSigner } from "@solana/client";
 import {
   useSendTransaction,
   useSolanaClient,
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { truncateAddress } from "@/lib/format";
 import { buildOperatorDepositTransactionPlan } from "@/lib/solana/vault-live-action-transaction";
 import type { OperatorDepositBundle } from "@/lib/solana/vault-live-actions";
+import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
 import type { OperatorVaultDetailPageData } from "@/server/vaults/authenticated";
 
 type OperatorDepositRailProps = {
@@ -106,7 +106,7 @@ export function OperatorDepositRail({
         );
       }
 
-      const wrappedSigner = createWalletTransactionSigner(wallet, {
+      const wrappedSigner = createPreferredWalletTransactionSigner(wallet, {
         commitment: "confirmed",
       });
       const plan = await buildOperatorDepositTransactionPlan({
@@ -118,6 +118,8 @@ export function OperatorDepositRail({
         authority: wrappedSigner.signer,
         feePayer: wrappedSigner.signer,
         instructions: plan.instructions,
+        prepareTransaction: false,
+        version: "legacy",
       });
 
       setSubmittedSignature(nextSignature.toString());

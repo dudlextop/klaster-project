@@ -1,6 +1,5 @@
 "use client";
 
-import { createWalletTransactionSigner } from "@solana/client";
 import {
   useBalance,
   useSendTransaction,
@@ -34,6 +33,7 @@ import {
   SOL_WRAP_BUFFER_LAMPORTS,
 } from "@/lib/solana/settlement";
 import { toSettlementAtomicAmount } from "@/lib/solana/vault-transaction-accounts";
+import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
 import type { PurchasePanelConfig } from "@/server/vaults/public";
 
 type PurchasePanelProps = {
@@ -139,6 +139,7 @@ function LivePurchasePanel({
   const [shareAmount, setShareAmount] = useState(() =>
     getInitialShareAmount(purchaseConfig.estimatedAvailableShares),
   );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const usesNativeSolSettlement = isWrappedSolMint(purchaseConfig.usdcMint);
   const solBalance = useBalance(session?.account.address, {
     watch: true,
@@ -185,23 +186,31 @@ function LivePurchasePanel({
       return;
     }
 
+    setErrorMessage(null);
     reset();
+    try {
+      const wrappedSigner = createPreferredWalletTransactionSigner(session, {
+        commitment: "confirmed",
+      });
+      const plan = await buildPurchaseTransactionPlan({
+        buyerSigner: wrappedSigner.signer,
+        purchaseConfig,
+        shares: quantityState.shares,
+        solana,
+      });
 
-    const wrappedSigner = createWalletTransactionSigner(session, {
-      commitment: "confirmed",
-    });
-    const plan = await buildPurchaseTransactionPlan({
-      buyerSigner: wrappedSigner.signer,
-      purchaseConfig,
-      shares: quantityState.shares,
-      solana,
-    });
-
-    await send({
-      authority: wrappedSigner.signer,
-      feePayer: wrappedSigner.signer,
-      instructions: plan.instructions,
-    });
+      await send({
+        authority: wrappedSigner.signer,
+        feePayer: wrappedSigner.signer,
+        instructions: plan.instructions,
+        prepareTransaction: false,
+        version: "legacy",
+      });
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Investment failed.",
+      );
+    }
   }
 
   return (
@@ -378,9 +387,16 @@ function LivePurchasePanel({
           </p>
         ) : null}
 
-        {sendStatus === "error" && sendError ? (
+        {errorMessage ? (
           <p className="font-mono text-[10px] leading-6 text-destructive">
-            Investment failed: {String(sendError)}
+            Investment failed: {errorMessage}
+          </p>
+        ) : sendStatus === "error" && sendError ? (
+          <p className="font-mono text-[10px] leading-6 text-destructive">
+            Investment failed:{" "}
+            {sendError instanceof Error
+              ? sendError.message
+              : "The browser wallet rejected or aborted the transaction."}
           </p>
         ) : null}
 
