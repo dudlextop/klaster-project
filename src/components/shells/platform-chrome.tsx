@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { WalletAuthControl } from "@/components/auth/wallet-auth-control";
+import { KlasterLogoMark } from "@/components/klaster/logo-mark";
 import { Badge } from "@/components/ui/badge";
 import { formatClusterLabel } from "@/lib/format";
 import { platformNavigation } from "@/lib/navigation";
@@ -43,9 +44,7 @@ export function PlatformChrome({
                 Platform
               </p>
               <Link className="group flex items-center gap-2" href="/">
-                <span className="flex size-8 items-center justify-center rounded bg-primary font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
-                  KA
-                </span>
+                <KlasterLogoMark className="h-8 w-10 text-foreground" />
                 <span className="font-mono text-sm font-bold uppercase tracking-[0.18em] text-foreground transition-colors group-hover:text-teal">
                   KlasterAI
                 </span>

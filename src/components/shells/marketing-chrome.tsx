@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { KlasterLogoMark } from "@/components/klaster/logo-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -29,9 +30,7 @@ export function MarketingChrome({ children }: MarketingChromeProps) {
         <div className="container-shell flex h-12 items-center justify-between gap-3 md:h-14 md:gap-6">
           <div className="flex items-center gap-3">
             <Link href="/" className="group flex min-w-0 items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded bg-primary font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
-                KA
-              </span>
+              <KlasterLogoMark className="h-7 w-9 text-foreground" />
               <span className="hidden font-mono text-sm font-bold uppercase tracking-[0.18em] text-foreground transition-colors group-hover:text-teal sm:inline">
                 KlasterAI
               </span>

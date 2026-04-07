@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { KlasterLogoMark } from "@/components/klaster/logo-mark";
 import { Badge } from "@/components/ui/badge";
 
 type SystemStateFrameProps = {
@@ -22,9 +23,7 @@ export function SystemStateFrame({
         <section className="w-full max-w-3xl space-y-6">
           <div className="rounded-lg border border-border bg-surface p-5 md:p-6">
             <div className="mb-4 flex items-center gap-3">
-              <span className="flex size-8 items-center justify-center rounded-md bg-primary font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
-                KA
-              </span>
+              <KlasterLogoMark className="h-8 w-10 text-foreground" />
               <span className="font-mono text-sm font-bold uppercase tracking-[0.18em] text-foreground">
                 KlasterAI
               </span>
