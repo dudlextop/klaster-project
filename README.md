@@ -1,175 +1,187 @@
 # KlasterAI
 
-KlasterAI is a devnet-first marketplace for verified AI compute vaults.
-It combines a Next.js 16 application, a Supabase-backed read model, and an Anchor Solana program so operators can submit real compute assets, admins can approve them, investors can buy non-transferable Token-2022 shares, operators can deposit revenue, and investors can claim yield per vault.
+![License: MIT](https://img.shields.io/badge/license-MIT-1f2937?style=flat-square)
+![Next.js](https://img.shields.io/badge/Next.js-16-111111?style=flat-square)
+![Solana](https://img.shields.io/badge/Solana-Devnet-14f195?style=flat-square)
+![Anchor](https://img.shields.io/badge/Anchor-0.32-7c3aed?style=flat-square)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ecf8e?style=flat-square)
 
-The product is intentionally trust-first rather than token-first.
-Every surface is built around disclosed constraints, verification evidence, readable issuance rules, and role-specific operational rails.
+> Tokenized AI compute infrastructure with verified onchain vaults, readable disclosure, real devnet share purchases, and revenue tracking that investors can actually inspect.
 
-## What This Project Does
+[Live App](https://klaster-project.vercel.app) · [Marketplace](https://klaster-project.vercel.app/marketplace) · [Vault Detail](https://klaster-project.vercel.app/vaults/demo-vault) · [Program on Devnet](https://explorer.solana.com/address/23G3S9gNH4x3PPJ8sJwvLfjFhQSJ2JJukZGrR29RQiTe?cluster=devnet)
 
-KlasterAI solves a specific problem: compute exposure is usually opaque.
-Investors are often asked to trust spreadsheets, informal diligence, and off-platform routing logic.
-KlasterAI turns that into a structured workflow with:
+---
 
-- operator-submitted vaults
-- admin verification and approval
-- marketplace listings with explicit disclosure
-- onchain purchase, revenue deposit, and claim preparation
-- public and authenticated read models for marketplace, portfolio, operator, and admin surfaces
+## ✨ What KlasterAI Is
 
-This repository contains the full app and the onchain program in one place.
+KlasterAI turns AI compute exposure into a structured financial product.
 
-## Why KlasterAI Is Strong
+Instead of asking users to trust spreadsheets, private DMs, and vague routing claims, KlasterAI presents compute pools as verified vaults with:
 
-- Trust-first product shape. The app is designed around verification, disclosure, and constrained issuance rather than speculative token UX.
-- Real role separation. Public visitors, investors, operators, and admins each get distinct surfaces and actions.
-- Practical local workflow. The repo supports both seeded demo mode and live mode, which keeps UI exploration possible even before infrastructure is fully configured.
-- End-to-end devnet stack. The frontend, server runtime, Supabase schema, webhook ingestion, generated Solana client, and Anchor program all live in the same project.
-- Clear operational boundaries. v1 explicitly blocks secondary-market behavior, transferability, and premature mainnet posture.
+- clear hardware and issuance terms
+- admin-reviewed proof packages
+- public marketplace listings
+- onchain share purchases
+- operator revenue deposits
+- investor claim rails tied to vault accounting
 
-## Product Model
+This repository contains the complete product stack in one place:
 
-The core lifecycle is:
+- a Next.js 16 application
+- Supabase-backed public and authenticated read models
+- an Anchor Solana program for vault issuance and accounting
+- live devnet purchase, deposit, and claim preparation flows
 
-1. An operator creates a vault draft and uploads private proof material.
-2. An admin reviews the vault and approves it for listing.
-3. The marketplace exposes the verified vault with readable constraints and disclosure.
-4. An investor buys non-transferable shares through the public purchase rail.
+---
+
+## 🚀 Why This Matters
+
+### 1. Compute investing is usually opaque
+
+Most AI infrastructure offerings still rely on private diligence and off-platform trust. That makes ownership, proof, routing posture, and fee logic hard to verify.
+
+**KlasterAI fixes this with a marketplace built around verification, constraints, and readable economics.**
+
+### 2. Tokenization alone is not enough
+
+A token without disclosed asset posture and explicit issuance rules does not solve the trust problem.
+
+**KlasterAI makes the vault itself the product surface, not just the token.**
+
+### 3. Revenue needs to be legible
+
+If deposits, claims, and vault posture are not visible, investors cannot reason about outcomes.
+
+**KlasterAI combines onchain settlement with a mirrored application read model for portfolio, operator, and admin views.**
+
+---
+
+## 🧩 What You Can Do
+
+### Public marketplace
+
+- browse verified compute vaults
+- inspect vault detail, health, routing, and disclosure panels
+- buy non-transferable shares on devnet
+
+### Portfolio
+
+- review holdings by vault
+- inspect claim posture
+- prepare investor claim actions
+
+### Operator surface
+
+- create vault drafts
+- upload private proof documents
+- manage per-vault operations
+- prepare revenue deposit actions
+
+### Admin surface
+
+- review submitted vaults
+- approve vaults for listing
+- pause or resume vaults
+- finalize approval metadata and issuance rails
+
+---
+
+## 🔥 Current Live Posture
+
+- Production app: [https://klaster-project.vercel.app](https://klaster-project.vercel.app)
+- Solana cluster: `devnet`
+- Program ID: `23G3S9gNH4x3PPJ8sJwvLfjFhQSJ2JJukZGrR29RQiTe`
+- Canonical live vault route: [https://klaster-project.vercel.app/vaults/demo-vault](https://klaster-project.vercel.app/vaults/demo-vault)
+
+The project already supports:
+
+- a verified live vault in Supabase
+- a real onchain vault account on devnet
+- a real devnet share purchase flow
+- a real devnet revenue deposit flow
+- mirrored read surfaces for marketplace and operations
+
+---
+
+## 🛠️ Product Flow
+
+KlasterAI follows a simple lifecycle:
+
+1. An operator creates a vault and submits proof material.
+2. An admin reviews the evidence and prepares approval.
+3. The vault becomes publicly visible in the marketplace.
+4. An investor buys shares through the onchain purchase rail.
 5. The operator deposits revenue.
-6. The investor claims yield according to the vault revenue index.
+6. Investors claim yield against the vault revenue index.
 
 This is not a generic token launcher.
-It is a controlled issuance and revenue-accounting flow for real compute assets.
 
-## Core Capabilities
+It is a controlled issuance and revenue-accounting system for real compute infrastructure.
 
-### Marketplace
+---
 
-- public landing page
-- marketplace listings
-- per-vault detail pages
-- verification, economics, health, routing, and task stream panels
+## 🏗️ Architecture
 
-### Investor workspace
+### Frontend
 
-- portfolio overview
-- per-vault holdings
-- claim posture and claim preparation rail
+- `src/app` — routes, layouts, API routes
+- `src/components` — marketing, vault, auth, shell, and platform UI
+- `src/lib` — env parsing, formatting, Solana transaction helpers, shared utilities
 
-### Operator workspace
+### Server runtime
 
-- vault board
-- new-vault creation entry point
-- per-vault workspace
-- revenue deposit preparation rail
-- private proof-document upload surface
+- `src/server/auth` — wallet challenge, verification, cookies, access guards
+- `src/server/vaults` — public and authenticated read models, admin/operator/investor flows
+- `src/server/helius` — webhook ingestion and event mirroring
+- `src/server/storage` — private proof document upload flow
+- `src/server/supabase` — service-role data access
 
-### Admin workspace
+### Onchain
 
-- verification queue
-- per-vault review surface
-- approval preparation and finalize flow
-- pause and review endpoints
+- `anchor/` — Anchor workspace and Rust program
+- `src/programs/klaster-vault` — generated TypeScript client
+- `src/lib/solana` — transaction preparation for approval, purchase, deposit, and claim rails
 
-## User-Facing Routes
+---
+
+## 📍 Core Routes
 
 | Route | Purpose |
 |---|---|
 | `/` | marketing landing page |
-| `/marketplace` | public vault marketplace |
+| `/marketplace` | public marketplace |
 | `/vaults/[vaultId]` | public vault detail |
-| `/portfolio` | investor workspace |
-| `/operator/vaults` | operator vault board |
-| `/operator/vaults/new` | operator create-vault entry |
-| `/operator/vaults/[vaultId]` | operator vault workspace |
-| `/admin/verifications` | admin verification queue |
-| `/admin/verifications/[vaultId]` | admin vault review surface |
+| `/portfolio` | investor portfolio |
+| `/operator/vaults` | operator board |
+| `/operator/vaults/new` | new vault entry |
+| `/operator/vaults/[vaultId]` | operator vault surface |
+| `/admin/verifications` | admin review queue |
+| `/admin/verifications/[vaultId]` | admin vault review detail |
 
-## Key API Routes
+---
+
+## ⚙️ Key API Surfaces
 
 | Route | Purpose |
 |---|---|
-| `POST /api/auth/siws/challenge` | issue wallet sign-in challenge |
-| `POST /api/auth/siws/verify` | verify wallet signature and create session |
-| `POST /api/auth/siws/logout` | clear session |
-| `POST /api/operator/vaults` | create or submit operator vault draft |
-| `POST /api/operator/vaults/[vaultId]/uploads` | prepare private proof-document upload |
-| `POST /api/operator/vaults/[vaultId]/deposit/prepare` | prepare operator revenue deposit bundle |
-| `POST /api/portfolio/vaults/[vaultId]/claim/prepare` | prepare investor claim bundle |
-| `POST /api/admin/verifications/[vaultId]/review` | record admin review decision |
-| `POST /api/admin/verifications/[vaultId]/approve/prepare` | prepare admin approval bundle |
-| `POST /api/admin/verifications/[vaultId]/approve/finalize` | finalize approval bookkeeping |
+| `POST /api/auth/siws/challenge` | wallet sign-in challenge |
+| `POST /api/auth/siws/verify` | wallet session verification |
+| `POST /api/auth/siws/logout` | clear wallet session |
+| `POST /api/operator/vaults` | create or submit vault |
+| `POST /api/operator/vaults/[vaultId]/uploads` | prepare proof upload |
+| `POST /api/operator/vaults/[vaultId]/deposit/prepare` | prepare revenue deposit |
+| `POST /api/portfolio/vaults/[vaultId]/claim/prepare` | prepare investor claim |
+| `POST /api/admin/verifications/[vaultId]/review` | review vault |
+| `POST /api/admin/verifications/[vaultId]/approve/prepare` | prepare approval |
+| `POST /api/admin/verifications/[vaultId]/approve/finalize` | finalize approval |
 | `POST /api/admin/vaults/[vaultId]/pause` | pause or resume vault |
-| `POST /api/helius/webhooks` | ingest Helius webhook events |
+| `POST /api/helius/webhooks` | ingest chain activity and mirror it into the app model |
 
-## Runtime Modes
+---
 
-The app intentionally supports two runtime postures.
+## 🧪 Stack
 
-### 1. Seeded demo mode
-
-Use this when you want the product to render without full infrastructure.
-
-Behavior:
-
-- seeded marketplace and workspace data
-- demo role sessions for protected surfaces in local development
-- no durable live settlement
-- useful for UI development, design review, and flow inspection
-
-### 2. Live mode
-
-Use this when you want real wallet auth, Supabase-backed reads, storage, and devnet transaction flows.
-
-Behavior:
-
-- SIWS wallet authentication
-- signed HTTP-only session cookies
-- Supabase-backed public and authenticated read models
-- Helius-backed program/runtime connectivity
-- Pinata-backed public metadata publishing
-- private proof-document storage
-- live preparation rails for approval, deposit, and claim flows
-
-### Live Runtime Availability Rules
-
-The repo switches behavior based on configured runtime pieces:
-
-- Wallet session runtime requires:
-  - `SESSION_SECRET`
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `SUPABASE_SERVICE_ROLE_KEY`
-- Public read-model runtime requires:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `SUPABASE_SERVICE_ROLE_KEY`
-- Program runtime requires:
-  - `NEXT_PUBLIC_HELIUS_RPC_URL`
-  - `NEXT_PUBLIC_PROGRAM_ID_KLASTER_VAULT` or `PROGRAM_ID_KLASTER_VAULT`
-
-If the live-only pieces are missing, the product falls back to demo posture instead of failing closed during local development.
-
-## Current Deployment Posture
-
-- Cluster: `devnet`
-- Anchor provider cluster: `Devnet`
-- Program ID: `23G3S9gNH4x3PPJ8sJwvLfjFhQSJ2JJukZGrR29RQiTe`
-- Production app URL: [https://klaster-project.vercel.app](https://klaster-project.vercel.app)
-
-## v1 Constraints
-
-These are intentional, product-level constraints rather than missing polish:
-
-- devnet-first release posture
-- mainnet remains blocked until explicit approval and audit sign-off
-- vault shares are non-transferable in v1
-- no secondary market in v1
-- proof documents remain private; only approved summaries become public
-- webhook-driven mirrors are eventually consistent and should not be treated as instant settlement truth
-
-## Stack
-
-| Layer | Choice |
+| Layer | Technology |
 |---|---|
 | App framework | Next.js 16 App Router |
 | UI runtime | React 19 |
@@ -178,60 +190,23 @@ These are intentional, product-level constraints rather than missing polish:
 | Lint / format | Biome |
 | Unit tests | Vitest |
 | Browser tests | Playwright |
-| Database / backend | Supabase Postgres + Supabase JS |
-| Auth model | wallet signature challenge + HTTP-only session cookie |
+| Database / backend | Supabase Postgres |
+| Auth model | Solana wallet signature challenge + HTTP-only session cookie |
 | Onchain program | Anchor |
 | Token standard | Token-2022 |
-| Metadata / assets | Pinata |
-| Chain / event infra | Helius |
+| RPC / webhooks | Helius |
+| Metadata / files | Pinata |
 
-## Architecture
+---
 
-The project is split into clear layers.
-
-### Frontend
-
-- `src/app` contains App Router pages, layouts, and route modules
-- `src/components` contains marketing, workspace, shell, auth, vault, and UI components
-- `src/lib` contains shared helpers, environment parsing, formatting, and Solana transaction preparation helpers
-
-### Server
-
-- `src/server/auth` handles wallet auth, region gating, challenge/session tokens, and guards
-- `src/server/vaults` handles public and authenticated read models, live action preparation, admin/operator/investor selectors, and runtime branching
-- `src/server/storage` handles private document upload logic
-- `src/server/helius` handles webhook parsing and processing
-- `src/server/supabase` contains service-role access
-
-### Onchain
-
-- `anchor/` contains the Anchor workspace
-- `src/programs/klaster-vault` contains the generated TypeScript program client used by the app
-- `src/lib/solana` contains transaction-preparation logic for approval, deposits, and claims
-
-## Repository Layout
-
-```text
-src/
-  app/                      App Router routes, layouts, API routes
-  components/               UI primitives and route-level compositions
-  lib/                      shared helpers, env parsing, Solana client helpers
-  programs/                 generated program client and tests
-  server/                   auth, read models, webhook/runtime, storage, Supabase
-anchor/                     Anchor program workspace
-supabase/migrations/        SQL migrations
-docs/                       product, technical, design, and execution docs
-public/                     static assets
-```
-
-## Getting Started
+## ⚡ Quick Start
 
 ### Requirements
 
 - Bun 1.x
-- Node.js runtime compatible with Next.js 16
-- Rust, Solana CLI, and Anchor only if you need to build or test the onchain program
-- Supabase, Helius, and Pinata credentials only if you want live mode
+- Node.js compatible with Next.js 16
+- Solana CLI and Anchor if you want to work on the onchain program
+- Supabase, Helius, and Pinata credentials for live runtime
 
 ### Install
 
@@ -253,33 +228,35 @@ bun run dev
 
 Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
-## Environment Variables
+---
 
-### Minimum local demo mode
+## 🔐 Environment Variables
+
+### Essential local variables
 
 | Variable | Purpose |
 |---|---|
 | `NEXT_PUBLIC_APP_URL` | canonical local app URL |
-| `NEXT_PUBLIC_SOLANA_CLUSTER` | active Solana cluster, default `devnet` |
-| `APP_REGION_BLOCKLIST` | region blocklist; set empty string to disable |
+| `NEXT_PUBLIC_SOLANA_CLUSTER` | active cluster, usually `devnet` |
+| `APP_REGION_BLOCKLIST` | optional region blocklist |
 
-### Live mode
+### Live runtime variables
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_HELIUS_RPC_URL` | client-visible Solana RPC endpoint |
-| `HELIUS_API_KEY` | Helius server integration |
+| `NEXT_PUBLIC_HELIUS_RPC_URL` | Solana RPC endpoint |
+| `HELIUS_API_KEY` | Helius integration |
 | `HELIUS_WEBHOOK_SECRET` | webhook verification |
-| `NEXT_PUBLIC_SUPABASE_URL` | public Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_URL` | public Supabase URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | public Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | server-side Supabase access |
-| `SUPABASE_PRIVATE_BUCKET` | bucket for private proof documents |
-| `PINATA_JWT` | Pinata API auth |
+| `SUPABASE_PRIVATE_BUCKET` | private proof bucket |
+| `PINATA_JWT` | Pinata auth |
 | `SESSION_SECRET` | signs session and challenge tokens |
-| `SOLANA_ADMIN_MULTISIG` | treasury / platform multisig owner |
-| `USDC_MINT_ADDRESS` | active USDC mint for the chosen cluster |
-| `NEXT_PUBLIC_PROGRAM_ID_KLASTER_VAULT` | client-facing vault program id |
-| `PROGRAM_ID_KLASTER_VAULT` | server/tooling program id fallback |
+| `SOLANA_ADMIN_MULTISIG` | admin / treasury owner |
+| `USDC_MINT_ADDRESS` | settlement mint for the active cluster |
+| `NEXT_PUBLIC_PROGRAM_ID_KLASTER_VAULT` | public-facing vault program id |
+| `PROGRAM_ID_KLASTER_VAULT` | server/tooling fallback program id |
 
 ### Optional integrations
 
@@ -290,31 +267,28 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 | `RESEND_API_KEY` | email delivery |
 | `TELEGRAM_BOT_TOKEN` | Telegram notifications |
 
-### Important Notes
+---
 
-- Keep `APP_REGION_BLOCKLIST` empty on the public hackathon deployment if wallet sign-in must remain globally reachable.
-- `NEXT_PUBLIC_PROGRAM_ID_KLASTER_VAULT` and `PROGRAM_ID_KLASTER_VAULT` can point to the same program address.
-- If you set `APP_REGION_BLOCKLIST` to an empty string, the runtime will not block regions by default.
+## 🗄️ Supabase Setup
 
-## Supabase Setup
-
-This project depends on two SQL migrations in `supabase/migrations/`:
+Apply these migrations in order:
 
 - [20260406123000_s03_auth_data_storage_webhook_backbone.sql](./supabase/migrations/20260406123000_s03_auth_data_storage_webhook_backbone.sql)
 - [20260406183000_s08_hybrid_pool_expansion.sql](./supabase/migrations/20260406183000_s08_hybrid_pool_expansion.sql)
 
-Apply them in order.
+They establish:
 
-What they establish:
-
-- wallet-backed profiles and role data
-- vault records and verification backbone
-- purchases, claims, revenue deposits, and health snapshots
+- wallet-backed profiles
+- vaults and verification state
+- purchases, claims, and revenue deposits
+- health snapshots and task stream events
 - webhook event storage
-- yield source and task stream expansions
-- private proof-document storage bucket support
+- yield source modeling
+- private proof-document storage support
 
-## Onchain Program Workflow
+---
+
+## ⛓️ Onchain Program Workflow
 
 Build the Anchor program:
 
@@ -336,26 +310,30 @@ bun run program:client
 
 The generated client lives under [src/programs/klaster-vault](./src/programs/klaster-vault).
 
-## Scripts
+---
+
+## 📦 Scripts
 
 | Command | Purpose |
 |---|---|
-| `bun run dev` | start local development server |
+| `bun run dev` | start local dev server |
 | `bun run build` | production build |
-| `bun run start` | start production server locally |
-| `bun run lint` | run Biome checks |
-| `bun run typecheck` | generate Next route types and run TypeScript |
-| `bun run test` | run Vitest suite |
-| `bun run verify` | run lint, typecheck, and unit tests |
-| `bun run test:e2e` | run Playwright tests |
-| `bun run format` | format the codebase with Biome |
+| `bun run start` | run production server locally |
+| `bun run lint` | Biome checks |
+| `bun run typecheck` | route type generation + TypeScript |
+| `bun run test` | Vitest suite |
+| `bun run verify` | lint + typecheck + unit tests |
+| `bun run test:e2e` | Playwright tests |
+| `bun run format` | format codebase |
 | `bun run program:build` | build Anchor program |
-| `bun run program:test` | run Anchor/Rust program tests |
-| `bun run program:client` | regenerate Codama program client |
+| `bun run program:test` | run Rust / Anchor tests |
+| `bun run program:client` | regenerate Codama client |
 
-## Recommended Verification Flow
+---
 
-For normal app work:
+## ✅ Verification Flow
+
+For normal product work:
 
 ```bash
 bun run verify
@@ -368,73 +346,64 @@ bun run verify
 bun run test:e2e
 ```
 
-If you changed program or transaction logic:
+For program and transaction changes:
 
 ```bash
 bun run program:test
 bun run program:client
 ```
 
-## Manual Live QA
+---
 
-For a realistic devnet validation pass:
+## 🌐 Deployment
 
-1. Sign in with an admin wallet.
-2. Approve a pending vault.
-3. Open the marketplace and confirm the vault is visible.
-4. Buy shares from an investor wallet.
-5. Deposit revenue from the operator wallet.
-6. Claim yield from the investor wallet.
-7. Verify Supabase-backed read surfaces reflect approval, revenue, and claim indexing.
+KlasterAI is deployed as a standard Next.js project on Vercel.
 
-## Deployment
-
-The app is intended to deploy as a standard Next.js project on Vercel.
-
-Recommended deployment defaults:
+Recommended defaults:
 
 - import the repository as a Next.js project
-- keep the repository root as the working directory
-- configure the environment variables from `.env.example`
-- set `NEXT_PUBLIC_APP_URL` to the final production URL
-- leave `APP_REGION_BLOCKLIST` empty when public judge access is required
+- keep the repo root as the working directory
+- configure environment variables from `.env.example`
+- set `NEXT_PUBLIC_APP_URL` to the production URL
+- keep region blocking empty when broad wallet access is needed
 
 Operational notes:
 
-- purchase, approval, deposit, and claim rails are devnet-first
-- webhook mirroring is best-effort synchronization, not the immediate source of truth
-- the app is built for Node.js runtime surfaces, not Edge-based wallet or webhook logic
+- settlement flows run on devnet
+- webhook mirroring is a synchronization layer, not the immediate source of truth
+- wallet, approval, purchase, deposit, and claim flows are built for Node runtime surfaces
 
-## Design Direction
+---
 
-KlasterAI uses a dark, high-trust, Solana-informed design system with:
+## 🎨 Product Feel
 
-- editorial marketing layout
-- disciplined terminal-style product surfaces
-- restrained accent usage
-- explicit visual hierarchy around verification and actions
+KlasterAI uses a dark, high-trust, Solana-informed design language:
 
-The canonical design sources are:
+- editorial landing composition
+- disciplined product shells
+- restrained accent energy
+- strong typography and data hierarchy
+- explicit emphasis on verification and action rails
+
+Canonical design docs:
 
 - [docs/DESIGN.md](./docs/DESIGN.md)
 - [docs/DESIGN_SYSTEM.md](./docs/DESIGN_SYSTEM.md)
 - [docs/QUALITY_SCORE.md](./docs/QUALITY_SCORE.md)
 
-## Status Summary
+---
 
-Current project posture:
+## 📚 Project Links
 
-- full app UI migrated to the current KlasterAI visual language
-- devnet Anchor program deployed
-- Supabase migration backbone defined
-- live and demo runtime paths both supported
-- Vercel production deployment active
+- Live app: [https://klaster-project.vercel.app](https://klaster-project.vercel.app)
+- Marketplace: [https://klaster-project.vercel.app/marketplace](https://klaster-project.vercel.app/marketplace)
+- Canonical vault: [https://klaster-project.vercel.app/vaults/demo-vault](https://klaster-project.vercel.app/vaults/demo-vault)
+- Private repo: [https://github.com/KiroshiAiviom/klaster-ai](https://github.com/KiroshiAiviom/klaster-ai)
+- Public repo: [https://github.com/azatkabiden/klaster-project](https://github.com/azatkabiden/klaster-project)
+- Mirror repo: [https://github.com/dudlextop/klaster-project](https://github.com/dudlextop/klaster-project)
 
-If you want to evaluate the project quickly, start with:
+---
 
-1. landing page
-2. marketplace
-3. vault detail
-4. portfolio
-5. operator workspace
-6. admin verification queue
+## 📄 License
+
+MIT — see [LICENSE](./LICENSE) when present in the publish target or repository configuration.
