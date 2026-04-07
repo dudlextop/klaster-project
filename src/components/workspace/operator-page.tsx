@@ -52,14 +52,14 @@ function getStatusBadge(status: OperatorVaultCard["status"]) {
 
 function getWorkspaceSourceCopy(state: OperatorWorkspacePageData["state"]) {
   if (state === "seeded_demo") {
-    return "Seeded operator mirror.";
+    return "Seeded operations mirror.";
   }
 
   if (state === "live_error") {
     return "Live operator read failed.";
   }
 
-  return "Live mirrored workspace.";
+  return "Live operations mirror.";
 }
 
 function Lane({
@@ -144,7 +144,7 @@ function Lane({
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Button asChild size="sm" variant="secondary">
                     <Link href={`/operator/vaults/${vault.slug}`}>
-                      Open workspace
+                      Open vault
                     </Link>
                   </Button>
                 </div>
@@ -172,7 +172,7 @@ export function OperatorWorkspacePageView({
         <ErrorCard
           description="The route structure is implemented, but the live operator read failed for this request."
           detail={data.errorMessage ?? undefined}
-          title="Operator workspace is temporarily unavailable"
+          title="Operations board is temporarily unavailable"
         />
       </section>
     );
@@ -190,7 +190,7 @@ export function OperatorWorkspacePageView({
           </Button>
         }
         description="Drafts, pending reviews, verified vaults, and paused operations stay in explicit lanes so the operator can move each asset forward without losing status, asset origin, fee posture, or campaign-progress context."
-        eyebrow="Operator workspace"
+        eyebrow="Vault operations"
         source={getWorkspaceSourceCopy(data.state)}
         title="Review vault stage, blocker, and next action from one board."
       />
@@ -246,7 +246,7 @@ export function OperatorDraftPageView({
   return (
     <section className="space-y-6">
       <PageHeader
-        description="The form keeps asset identity, economics, and proof checklist in one structured workspace so review blockers stay local to the field group that needs attention."
+        description="The form keeps asset identity, economics, and proof checklist in one structured surface so review blockers stay local to the field group that needs attention."
         eyebrow="Create vault"
         source={
           data.state === "seeded_demo"
@@ -415,7 +415,7 @@ export function OperatorVaultDetailPageView({
         <ErrorCard
           description="The operator detail route is implemented, but the current vault could not be loaded from the live read path."
           detail={data.errorMessage ?? undefined}
-          title="Vault workspace is temporarily unavailable"
+          title="Vault detail is temporarily unavailable"
         />
       </section>
     );
@@ -429,7 +429,7 @@ export function OperatorVaultDetailPageView({
             <CardTitle>Vault not found</CardTitle>
             <CardDescription>
               The requested operator vault could not be found in the current
-              workspace dataset.
+              dataset.
             </CardDescription>
           </CardHeader>
         </Card>

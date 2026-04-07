@@ -27,8 +27,8 @@ export function PlatformChrome({
   const pathname = usePathname();
 
   function isActive(href: string) {
-    if (href === "/vaults/demo-vault") {
-      return pathname.startsWith("/vaults/");
+    if (href === "/vaults") {
+      return pathname === "/vaults" || pathname.startsWith("/vaults/");
     }
 
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -56,7 +56,7 @@ export function PlatformChrome({
                 <Badge variant="verified">Wallet-supported</Badge>
               </div>
               <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                Public market and role workspaces.
+                Public market, live vault rails, and shared MVP access.
               </p>
             </div>
 
@@ -75,15 +75,6 @@ export function PlatformChrome({
                 >
                   <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em]">
                     {item.label}
-                  </span>
-                  <span
-                    className={`rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.18em] ${
-                      isActive(item.href)
-                        ? "border-secondary/20 bg-secondary/12 text-secondary"
-                        : "border-border bg-surface-3 text-muted-foreground"
-                    }`}
-                  >
-                    {item.group}
                   </span>
                 </Link>
               ))}

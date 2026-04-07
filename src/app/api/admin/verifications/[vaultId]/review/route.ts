@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { requireCurrentSession } from "@/server/auth/guards";
+import { requireMvpAccessSession } from "@/server/auth/guards";
 import { handleRouteError } from "@/server/http/errors";
 import { reviewVault, reviewVaultSchema } from "@/server/vaults/admin";
 
@@ -13,7 +13,7 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const session = await requireCurrentSession(["admin"]);
+    const session = await requireMvpAccessSession();
     const body = reviewVaultSchema.parse(await request.json());
     const { vaultId } = await context.params;
     const result = await reviewVault(vaultId, body, session);

@@ -46,3 +46,13 @@ export async function requireCurrentSession(allowedRoles?: readonly AppRole[]) {
 
   return session;
 }
+
+export async function requireMvpAccessSession() {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    throw new AppError(401, "Authentication is required.");
+  }
+
+  return session;
+}

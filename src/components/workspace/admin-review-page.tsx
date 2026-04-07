@@ -59,14 +59,14 @@ function getStatusBadge(
 
 function getQueueSourceCopy(state: AdminReviewQueuePageData["state"]) {
   if (state === "seeded_demo") {
-    return "Seeded admin mirror.";
+    return "Seeded review mirror.";
   }
 
   if (state === "live_error") {
     return "Live admin read failed.";
   }
 
-  return "Live admin mirror.";
+  return "Live review mirror.";
 }
 
 export function AdminReviewQueuePageView({
@@ -92,7 +92,7 @@ export function AdminReviewQueuePageView({
         description="Queue rows stay semantic and dense so high-risk review decisions remain grounded in stable scan lanes instead of floating cards."
         eyebrow="Admin verification"
         source={getQueueSourceCopy(data.state)}
-        title="Triage the review queue before entering the case workspace."
+        title="Triage the review queue before opening a case."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -261,7 +261,7 @@ export function AdminReviewDetailPageView({
             <Badge variant="secondary">{data.review.nodeCategory}</Badge>
           </>
         }
-        description="Private proof review, public listing summary, and state transition controls stay visible together in one decision workspace."
+        description="Private proof review, public listing summary, and state transition controls stay visible together in one decision surface."
         sourceText={
           data.actionMode === "demo"
             ? "Demo mode keeps decision controls visible without mutations."

@@ -1,7 +1,6 @@
 "use client";
 
 import { createWalletTransactionSigner } from "@solana/client";
-import type { Address } from "@solana/kit";
 import {
   useSendTransaction,
   useSolanaClient,
@@ -24,7 +23,7 @@ import {
   validatePurchaseQuantity,
 } from "@/components/vaults/purchase-panel-logic";
 import { formatUsdcAmount, truncateAddress } from "@/lib/format";
-import { getPurchaseSharesInstructionAsync } from "@/programs/klaster-vault/generated/instructions/purchaseShares";
+import { buildPurchaseTransactionPlan } from "@/lib/solana/purchase-transaction";
 import type { PurchasePanelConfig } from "@/server/vaults/public";
 
 type PurchasePanelProps = {
@@ -161,41 +160,17 @@ function LivePurchasePanel({
     const wrappedSigner = createWalletTransactionSigner(session, {
       commitment: "confirmed",
     });
-    const usdcHelper = solana.splToken({
-      mint: purchaseConfig.usdcMint,
-      tokenProgram: purchaseConfig.usdcTokenProgram,
+    const plan = await buildPurchaseTransactionPlan({
+      buyerSigner: wrappedSigner.signer,
+      purchaseConfig,
+      shares: quantityState.shares,
+      solana,
     });
-    const shareHelper = solana.splToken({
-      mint: purchaseConfig.shareMint,
-      tokenProgram: purchaseConfig.shareTokenProgram,
-    });
-    const [buyerUsdcTokenAccount, buyerShareTokenAccount] = await Promise.all([
-      usdcHelper.deriveAssociatedTokenAddress(session.account.address),
-      shareHelper.deriveAssociatedTokenAddress(session.account.address),
-    ]);
-    const instruction = await getPurchaseSharesInstructionAsync(
-      {
-        buyer: wrappedSigner.signer,
-        buyerShareTokenAccount,
-        buyerUsdcTokenAccount,
-        operatorSettlementTokenAccount:
-          purchaseConfig.operatorSettlementTokenAccount as Address<string>,
-        shareMint: purchaseConfig.shareMint as Address<string>,
-        shareTokenProgram: purchaseConfig.shareTokenProgram as Address<string>,
-        shares: BigInt(quantityState.shares),
-        usdcMint: purchaseConfig.usdcMint as Address<string>,
-        usdcTokenProgram: purchaseConfig.usdcTokenProgram as Address<string>,
-        vault: purchaseConfig.vaultAddress as Address<string>,
-      },
-      {
-        programAddress: purchaseConfig.programAddress as Address<string>,
-      },
-    );
 
     await send({
       authority: wrappedSigner.signer,
       feePayer: wrappedSigner.signer,
-      instructions: [instruction],
+      instructions: plan.instructions,
     });
   }
 

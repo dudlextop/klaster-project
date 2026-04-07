@@ -20,7 +20,7 @@ import type { PortfolioPageData } from "@/server/vaults/authenticated";
 
 function getSourceCopy(state: PortfolioPageData["state"]) {
   if (state === "seeded_demo") {
-    return "Seeded investor mirror.";
+    return "Seeded portfolio mirror.";
   }
 
   if (state === "live_error") {
@@ -66,7 +66,7 @@ export function PortfolioPageView({ data }: { data: PortfolioPageData }) {
     <section className="space-y-6">
       <PageHeader
         description="Review current positions, paused exposure, and indexed claimable balances through one disciplined ledger. Gross revenue, platform fees, and investor-distributable yield stay explicit."
-        eyebrow="Investor workspace"
+        eyebrow="Portfolio"
         source={getSourceCopy(data.state)}
         title="Net claimable yield stays visible before vault-by-vault history."
       />

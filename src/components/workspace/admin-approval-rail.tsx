@@ -111,7 +111,7 @@ export function AdminApprovalRail({
 
       if (preparedApproval.bundle.adminWalletAddress !== walletAddress) {
         throw new Error(
-          "The connected browser wallet must match the signed-in admin session before approval can be sent.",
+          "The connected browser wallet must match the signed-in session before approval can be sent.",
         );
       }
 
@@ -211,15 +211,15 @@ export function AdminApprovalRail({
             </span>
           </div>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            This wallet must match the signed-in admin session before the
-            approval bundle can be sent.
+            This wallet must match the signed-in session before the approval
+            bundle can be sent.
           </p>
         </div>
       ) : (
         <div className="space-y-3 rounded-md border border-border-subtle bg-surface-2/70 p-4 text-sm">
           <p className="text-muted-foreground">
-            Connect the admin Wallet Standard wallet in-browser to send the
-            onchain bootstrap and approval transaction.
+            Connect a Wallet Standard wallet in-browser to send the onchain
+            bootstrap and approval transaction.
           </p>
           {isReady ? (
             connectors.length ? (

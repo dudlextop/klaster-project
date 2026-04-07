@@ -18,6 +18,32 @@ export type GetAllVaultDetailsOptions = {
   loadLiveListings?: () => Promise<PublicVaultDetail[] | null>;
 };
 
+function mergeLiveAndSeededVaults(liveVaults: PublicVaultDetail[]) {
+  const mergedVaults = [...liveVaults];
+  const seenSlugs = new Set(
+    liveVaults.map((vault) => vault.slug.toLowerCase()),
+  );
+
+  for (const seededVault of createSeedVaults()) {
+    if (seenSlugs.has(seededVault.slug.toLowerCase())) {
+      continue;
+    }
+
+    mergedVaults.push(seededVault);
+  }
+
+  return mergedVaults;
+}
+
+function getCanonicalVault(vaults: PublicVaultDetail[]) {
+  return (
+    vaults.find((vault) => vault.availability === "live") ??
+    vaults.find((vault) => vault.status === "verified") ??
+    vaults[0] ??
+    null
+  );
+}
+
 export async function getAllVaultDetails(
   options: GetAllVaultDetailsOptions = {},
 ): Promise<PublicVaultDataResult> {
@@ -38,11 +64,20 @@ export async function getAllVaultDetails(
     const liveDetails = await (options.loadLiveListings ?? getLiveListings)();
     const vaults = liveDetails ?? [];
 
+    if (!vaults.length) {
+      return {
+        errorMessage: null,
+        source: "seeded" as const,
+        state: "seeded_demo" as const,
+        vaults: createSeedVaults(),
+      };
+    }
+
     return {
       errorMessage: null,
       source: "live" as const,
-      state: vaults.length ? "live_ready" : "live_empty",
-      vaults,
+      state: "live_ready" as const,
+      vaults: mergeLiveAndSeededVaults(vaults),
     };
   } catch (error) {
     const errorMessage =
@@ -153,4 +188,13 @@ export async function getPublicVaultDetail(slug: string) {
   const { vault } = await getPublicVaultDetailPageData(slug);
 
   return vault;
+}
+
+export async function getCanonicalPublicVaultHref(
+  options?: GetAllVaultDetailsOptions,
+) {
+  const dataset = await getAllVaultDetails(options);
+  const vault = getCanonicalVault(dataset.vaults);
+
+  return vault ? `/vaults/${vault.slug}` : "/marketplace";
 }

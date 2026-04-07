@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export default function Unauthorized() {
   return (
     <SystemStateFrame
-      description="A signed session is required before this action or route can proceed. Public vault browsing stays open, while role workspaces remain protected."
+      description="A signed session is required before this action or route can proceed. Public vault browsing stays open while wallet-signed actions stay protected."
       eyebrow="401 / sign-in required"
       meta="Wallet Standard connection and SIWS remain the existing authentication path."
       title="Sign in with a wallet session before continuing."

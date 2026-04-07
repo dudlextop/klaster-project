@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     template: "%s | KlasterAI",
   },
   description:
-    "KlasterAI is a devnet-first marketplace for verified compute vaults with constrained issuance, wallet-bound workspaces, and readable revenue posture.",
+    "KlasterAI is a devnet-first marketplace for verified compute vaults with constrained issuance, wallet-signed actions, and readable revenue posture.",
 };
 
 export default function RootLayout({

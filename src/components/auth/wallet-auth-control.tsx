@@ -17,11 +17,6 @@ type WalletAuthControlProps = {
   session: AppSession | null;
 };
 
-const roleLabels = {
-  admin: "Admin",
-  investor: "Investor",
-  operator: "Operator",
-} as const;
 const textEncoder = new TextEncoder();
 
 async function readErrorMessage(response: Response) {
@@ -168,9 +163,7 @@ export function WalletAuthControl({
               : "Wallet auth"
             : "Demo fallback"}
         </Badge>
-        {currentSession ? (
-          <Badge variant="secondary">{roleLabels[currentSession.role]}</Badge>
-        ) : null}
+        {currentSession ? <Badge variant="secondary">MVP access</Badge> : null}
       </div>
 
       {authMode === "demo" ? (
@@ -182,7 +175,8 @@ export function WalletAuthControl({
           </p>
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             Wallet connection for public investment still works independently,
-            but workspace auth stays in demo mode in this shell.
+            while the rest of the platform stays visible through the MVP preview
+            layer.
           </p>
         </div>
       ) : currentSession ? (
@@ -192,7 +186,7 @@ export function WalletAuthControl({
               {truncateAddress(currentSession.walletAddress)}
             </p>
             <p className="font-mono text-[10px] leading-5 text-muted-foreground">
-              Session role: {roleLabels[currentSession.role]}.
+              Shared MVP access is enabled for this signed-in session.
             </p>
           </div>
 
@@ -210,7 +204,7 @@ export function WalletAuthControl({
           {sessionWalletMismatch ? (
             <p className="font-mono text-[10px] leading-5 text-warning">
               The browser wallet differs from the active app session. Switch the
-              wallet or sign out before sending role-bound live actions.
+              wallet or sign out before sending live actions.
             </p>
           ) : null}
 
@@ -261,7 +255,7 @@ export function WalletAuthControl({
         <div className="space-y-3" data-testid="wallet-auth-signed-out">
           <p className="text-sm leading-6 text-muted-foreground">
             Connect a Wallet Standard wallet, then sign the KlasterAI challenge
-            to unlock live role-aware sessions.
+            to unlock shared MVP access and wallet-signed actions.
           </p>
 
           {walletReady ? (

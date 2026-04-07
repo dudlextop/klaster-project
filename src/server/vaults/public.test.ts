@@ -23,15 +23,17 @@ describe("public vault read model state handling", () => {
     expect(demoVault?.feeSummary.platformFeesCollectedUsdc).toBeGreaterThan(0);
   });
 
-  it("preserves an empty live marketplace instead of falling back to demo data", async () => {
+  it("falls back to seeded continuity data when the live marketplace is empty", async () => {
     const result = await getAllVaultDetails({
       hasSupabaseReadRuntime: true,
       loadLiveListings: async () => [],
     });
 
-    expect(result.source).toBe("live");
-    expect(result.state).toBe("live_empty");
-    expect(result.vaults).toEqual([]);
+    expect(result.source).toBe("seeded");
+    expect(result.state).toBe("seeded_demo");
+    expect(result.vaults.some((vault) => vault.slug === "demo-vault")).toBe(
+      true,
+    );
   });
 
   it("falls back to seeded demo data when the live read fails", async () => {
@@ -50,13 +52,94 @@ describe("public vault read model state handling", () => {
     );
   });
 
-  it("does not expose seeded demo vault slugs when the live market is empty", async () => {
+  it("resolves the seeded canonical vault when the live market is empty", async () => {
     const result = await getPublicVaultDetailPageData("demo-vault", {
       hasSupabaseReadRuntime: true,
       loadLiveListings: async () => [],
     });
 
-    expect(result.state).toBe("live_empty");
-    expect(result.vault).toBeNull();
+    expect(result.state).toBe("seeded_demo");
+    expect(result.vault?.slug).toBe("demo-vault");
+  });
+
+  it("preserves seeded continuity when a live dataset does not contain the requested slug", async () => {
+    const result = await getPublicVaultDetailPageData("demo-vault", {
+      hasSupabaseReadRuntime: true,
+      loadLiveListings: async () => [
+        {
+          ...createMockLiveVault("live-vault"),
+        },
+      ],
+    });
+
+    expect(result.source).toBe("live");
+    expect(result.state).toBe("live_ready");
+    expect(result.vault?.slug).toBe("demo-vault");
   });
 });
+
+function createMockLiveVault(slug: string) {
+  return {
+    ...{
+      assetOrigin: "klaster_managed" as const,
+      availability: "live" as const,
+      averageHealthScore: 91,
+      averageUptimePct: 98,
+      campaignRaisedUsdc: 120_000,
+      campaignTargetUsdc: 240_000,
+      dataSource: "live" as const,
+      description: "Live vault",
+      feeSummary: {
+        grossRevenueUsdc: 1000,
+        investorNetRevenueUsdc: 900,
+        platformFeeBps: 1000,
+        platformFeesCollectedUsdc: 100,
+      },
+      hardwareSummary: {},
+      healthSeries: [],
+      healthSummary: "Live health summary",
+      id: "live-vault-id",
+      latestDepositAt: null,
+      latestHealth: null,
+      lowHealthScore: null,
+      metadataHash: null,
+      nodeCategory: "Inference cluster",
+      nodeLabel: "Live Vault",
+      onchainVaultAddress: null,
+      ownershipGrid: {
+        activeCells: 1,
+        totalCells: 20,
+      },
+      priceFloorDisclosure: "Disclosure",
+      pricePerShareUsdc: 10,
+      proofBundleHash: "proof",
+      publicShareSupply: 100,
+      purchaseConfig: {
+        estimatedAvailableShares: 50,
+        mode: "demo" as const,
+        reason: "No runtime",
+        sharePriceUsdc: 10,
+      },
+      remainingShares: 50,
+      routingSummary: {
+        activeProvider: null,
+        explanation: "Live routing summary",
+        mode: "smart_auto_routing" as const,
+        status: "live_ready" as const,
+      },
+      sharesSold: 50,
+      slug,
+      status: "verified" as const,
+      taskStream: [],
+      totalShares: 200,
+      valuationUsdc: 2000,
+      verificationSummary: {
+        notes: "Reviewed",
+        reviewedAt: null,
+        reviewedBy: null,
+      },
+      verifiedAt: null,
+      yieldSources: [],
+    },
+  };
+}

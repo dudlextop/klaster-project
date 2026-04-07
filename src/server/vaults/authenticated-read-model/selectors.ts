@@ -39,7 +39,11 @@ export async function getPortfolioPageData(
   }
 
   try {
-    return await getLivePortfolioPageData(session);
+    const liveData = await getLivePortfolioPageData(session);
+
+    return liveData.state === "live_empty"
+      ? getSeededPortfolioData()
+      : liveData;
   } catch (error) {
     return {
       activities: [],
@@ -76,13 +80,17 @@ export async function getOperatorWorkspacePageData(
   }
 
   try {
-    return await getLiveOperatorWorkspaceData(session);
+    const liveData = await getLiveOperatorWorkspaceData(session);
+
+    return liveData.state === "live_empty"
+      ? getSeededOperatorWorkspaceData()
+      : liveData;
   } catch (error) {
     return {
       errorMessage:
         error instanceof Error
           ? error.message
-          : "Operator workspace data could not be loaded.",
+          : "Operations data could not be loaded.",
       lanes: {
         draft: [],
         needs_info: [],
@@ -133,7 +141,11 @@ export async function getOperatorVaultDetailPageData(
   }
 
   try {
-    return await getLiveOperatorVaultDetail(session, idOrSlug);
+    const liveData = await getLiveOperatorVaultDetail(session, idOrSlug);
+
+    return liveData.state === "live_empty" && !liveData.vault
+      ? getSeededOperatorVaultDetail(idOrSlug)
+      : liveData;
   } catch (error) {
     return {
       actionMode: "live",
@@ -153,7 +165,6 @@ export async function getAdminReviewQueuePageData(
 ): Promise<AdminReviewQueuePageData> {
   if (
     !session ||
-    session.role !== "admin" ||
     !getReadModelRuntimeAvailability().hasSupabaseReadRuntime ||
     isDemoSession(session)
   ) {
@@ -161,7 +172,11 @@ export async function getAdminReviewQueuePageData(
   }
 
   try {
-    return await getLiveAdminQueueData();
+    const liveData = await getLiveAdminQueueData();
+
+    return liveData.state === "live_empty"
+      ? getSeededAdminQueueData()
+      : liveData;
   } catch (error) {
     return {
       errorMessage:
@@ -187,7 +202,6 @@ export async function getAdminReviewDetailPageData(
 ): Promise<AdminReviewDetailPageData> {
   if (
     !session ||
-    session.role !== "admin" ||
     !getReadModelRuntimeAvailability().hasSupabaseReadRuntime ||
     isDemoSession(session)
   ) {
@@ -195,7 +209,11 @@ export async function getAdminReviewDetailPageData(
   }
 
   try {
-    return await getLiveAdminReviewDetail(idOrSlug);
+    const liveData = await getLiveAdminReviewDetail(idOrSlug);
+
+    return liveData.state === "live_empty" && !liveData.review
+      ? getSeededAdminReviewDetail(idOrSlug)
+      : liveData;
   } catch (error) {
     return {
       actionMode: "live",

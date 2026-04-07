@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireCurrentSession } from "@/server/auth/guards";
+import { requireMvpAccessSession } from "@/server/auth/guards";
 import { handleRouteError } from "@/server/http/errors";
 import {
   portfolioClaimPrepareSchema,
@@ -19,7 +19,7 @@ export async function POST(request: Request, context: RouteContext) {
     await portfolioClaimPrepareSchema.parseAsync(
       await request.json().catch(() => ({})),
     );
-    const session = await requireCurrentSession(["investor"]);
+    const session = await requireMvpAccessSession();
     const { vaultId } = await context.params;
     const result = await preparePortfolioClaim(vaultId, session);
 

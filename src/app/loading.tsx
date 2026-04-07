@@ -3,7 +3,7 @@ import { SystemStateFrame } from "@/components/klaster/system-state-frame";
 export default function Loading() {
   return (
     <SystemStateFrame
-      description="The server is assembling the current vault, workspace, or marketplace snapshot. Wallet-bound actions stay blocked until the shell hydrates."
+      description="The server is assembling the current vault, platform, or marketplace snapshot. Wallet-bound actions stay blocked until the shell hydrates."
       eyebrow="Loading"
       meta="Server-rendered data is being prepared for the active route."
       title="Preparing the next product surface."

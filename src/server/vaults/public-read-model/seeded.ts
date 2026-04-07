@@ -286,7 +286,7 @@ export function createSeedVaults(): PublicVaultDetail[] {
         estimatedAvailableShares: 3_700,
         mode: "demo",
         reason:
-          "This workspace is currently rendering seeded demo data because live Solana and Supabase runtime variables are not available in the active shell.",
+          "This surface is currently rendering seeded MVP data because live Solana and Supabase runtime variables are not available in the active shell.",
         sharePriceUsdc: 98,
       },
       remainingShares: 3_700,

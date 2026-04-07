@@ -7,8 +7,8 @@ export default function NotFound() {
     <SystemStateFrame
       description="The requested route is not mapped inside the current verified marketplace shell. Return to a known product surface and continue from there."
       eyebrow="404 / route missing"
-      meta="Public, investor, operator, and admin surfaces are all linked from the shared shell."
-      title="That screen does not exist in the current KlasterAI workspace."
+      meta="Marketplace, vault detail, portfolio, and review surfaces are linked from the shared shell."
+      title="That screen does not exist in the current KlasterAI platform."
     >
       <div className="flex flex-wrap gap-3">
         <Button asChild>

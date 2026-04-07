@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 export default function Forbidden() {
   return (
     <SystemStateFrame
-      description="This route is reserved for a different role. The app keeps investor, operator, and admin workspaces separate even when the same wallet can access multiple flows."
+      description="This route is currently unavailable for the active platform session."
       eyebrow="403 / forbidden"
-      meta="Role-aware access remains enforced by the existing auth and guard boundaries."
-      title="This workspace is not available for the current session."
+      meta="Access boundaries are enforced by the current auth and guard settings."
+      title="This screen is not available right now."
     >
       <div className="flex flex-wrap gap-3">
         <Button asChild>

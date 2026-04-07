@@ -10,6 +10,7 @@
     "program:build": "cd anchor && . \"$HOME/.cargo/env\" && export PATH=\"$HOME/.local/share/solana/install/active_release/bin:$PATH\" && anchor build",
     "program:test": "cd anchor && . \"$HOME/.cargo/env\" && export PATH=\"$HOME/.local/share/solana/install/active_release/bin:$PATH\" && cargo test -p klaster_vault",
     "program:client": "bunx codama run --all",
+    "mvp:bootstrap-live-vault": "bun scripts/bootstrap-mvp-live-vault.ts",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "verify": "bun run lint && bun run typecheck && bun run test",
