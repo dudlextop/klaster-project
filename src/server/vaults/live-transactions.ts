@@ -15,7 +15,7 @@ export const operatorDepositPrepareSchema = z.object({
   amountUsdc: z
     .string()
     .trim()
-    .regex(/^\d+(?:\.\d{1,6})?$/),
+    .regex(/^\d+(?:\.\d{1,9})?$/),
 });
 
 export const portfolioClaimPrepareSchema = z.object({});

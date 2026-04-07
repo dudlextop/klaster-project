@@ -528,7 +528,7 @@ export function getSeededAdminReviewDetail(
       proofBundleHash: "proof-demo-review-bundle-8d4c20",
       publicSummary: [
         { label: "Public share supply", value: "3,400 shares" },
-        { label: "Share price", value: "$61.00" },
+        { label: "Share price", value: "◎61.00" },
         { label: "Sale posture", value: "Direct buyer minting after approval" },
         {
           label: "Visibility",

@@ -120,7 +120,7 @@ function getLiveApprovalRuntime() {
     !serverEnv.pinataJwt ||
     !serverEnv.sessionSecret ||
     !serverEnv.solanaAdminMultisig ||
-    !serverEnv.usdcMintAddress
+    !serverEnv.settlementMintAddress
   ) {
     throw new AppError(
       503,
@@ -422,7 +422,7 @@ export async function prepareVaultApproval(
     sharePriceUsdc: String(vault.share_price_usdc),
     shareTokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
     totalShares: getNumericValue(vault.total_shares),
-    usdcMint: serverEnv.usdcMintAddress,
+    usdcMint: serverEnv.settlementMintAddress,
     usdcTokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultId: vault.id,
   };

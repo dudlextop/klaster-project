@@ -140,6 +140,7 @@ vi.mock("@/server/supabase/service-role", () => ({
 vi.mock("@solana/client", () => ({
   TOKEN_2022_PROGRAM_ADDRESS: "token-2022-program",
   TOKEN_PROGRAM_ADDRESS: "token-program",
+  WRAPPED_SOL_MINT: "So11111111111111111111111111111111111111112",
   createDefaultClient: mockCreateDefaultClient,
 }));
 
@@ -174,6 +175,8 @@ beforeEach(() => {
   process.env.SESSION_SECRET =
     "local-session-secret-that-is-long-enough-for-approval-tests";
   process.env.SOLANA_ADMIN_MULTISIG = "treasury-wallet";
+  process.env.SETTLEMENT_MINT_ADDRESS =
+    "So11111111111111111111111111111111111111112";
   process.env.USDC_MINT_ADDRESS = "usdc-mint";
   mockPublishVaultPublicMetadata.mockResolvedValue({
     cid: "metadata-cid",
@@ -259,7 +262,7 @@ describe("admin approval flow", () => {
       publicMetadataUri: "ipfs://metadata-cid",
       sharePriceUsdc: "15.250000",
       shareTokenProgram: "token-2022-program",
-      usdcMint: "usdc-mint",
+      usdcMint: "So11111111111111111111111111111111111111112",
       usdcTokenProgram: "token-program",
       vaultId: "vault-1",
     });

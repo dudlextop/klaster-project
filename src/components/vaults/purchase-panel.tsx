@@ -2,6 +2,7 @@
 
 import { createWalletTransactionSigner } from "@solana/client";
 import {
+  useBalance,
   useSendTransaction,
   useSolanaClient,
   useSplToken,
@@ -22,8 +23,17 @@ import {
   getInitialShareAmount,
   validatePurchaseQuantity,
 } from "@/components/vaults/purchase-panel-logic";
-import { formatUsdcAmount, truncateAddress } from "@/lib/format";
+import {
+  formatSolAmount,
+  formatUsdcAmount,
+  truncateAddress,
+} from "@/lib/format";
 import { buildPurchaseTransactionPlan } from "@/lib/solana/purchase-transaction";
+import {
+  isWrappedSolMint,
+  SOL_WRAP_BUFFER_LAMPORTS,
+} from "@/lib/solana/settlement";
+import { toSettlementAtomicAmount } from "@/lib/solana/vault-transaction-accounts";
 import type { PurchasePanelConfig } from "@/server/vaults/public";
 
 type PurchasePanelProps = {
@@ -129,6 +139,10 @@ function LivePurchasePanel({
   const [shareAmount, setShareAmount] = useState(() =>
     getInitialShareAmount(purchaseConfig.estimatedAvailableShares),
   );
+  const usesNativeSolSettlement = isWrappedSolMint(purchaseConfig.usdcMint);
+  const solBalance = useBalance(session?.account.address, {
+    watch: true,
+  });
   const usdcBalance = useSplToken(purchaseConfig.usdcMint, {
     config: {
       tokenProgram: purchaseConfig.usdcTokenProgram,
@@ -143,12 +157,28 @@ function LivePurchasePanel({
   );
   const estimatedCost =
     quantityState.kind === "valid" ? quantityState.estimatedCostUsdc : 0;
+  const estimatedCostAtomic =
+    quantityState.kind === "valid"
+      ? toSettlementAtomicAmount(estimatedCost)
+      : BigInt(0);
   const walletReady = status === "connected" && session;
+  const hasBalanceData = usesNativeSolSettlement
+    ? solBalance.lamports !== null
+    : usdcBalance.balance?.amount !== undefined;
   const hasSufficientBalance =
-    quantityState.kind !== "valid" || usdcBalance.balance?.amount === undefined
+    quantityState.kind !== "valid" || !hasBalanceData
       ? true
-      : usdcBalance.balance.amount >=
-        BigInt(Math.round(estimatedCost * 1_000_000));
+      : usesNativeSolSettlement
+        ? (solBalance.lamports ?? BigInt(0)) >=
+          estimatedCostAtomic + SOL_WRAP_BUFFER_LAMPORTS
+        : (usdcBalance.balance?.amount ?? BigInt(0)) >= estimatedCostAtomic;
+  const formattedSettlementBalance = usesNativeSolSettlement
+    ? solBalance.lamports !== null
+      ? formatSolAmount(Number(solBalance.lamports) / 1_000_000_000)
+      : "Loading"
+    : usdcBalance.balance?.uiAmount !== undefined
+      ? `${usdcBalance.balance.uiAmount} settlement`
+      : "Loading";
 
   async function handlePurchase() {
     if (!session || quantityState.kind !== "valid") {
@@ -262,13 +292,20 @@ function LivePurchasePanel({
               </span>
             </div>
             <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">USDC balance</span>
+              <span className="text-muted-foreground">
+                {usesNativeSolSettlement ? "SOL balance" : "Settlement balance"}
+              </span>
               <span className="font-semibold tabular-nums text-foreground">
-                {usdcBalance.balance?.uiAmount
-                  ? `${usdcBalance.balance.uiAmount} USDC`
-                  : "Loading"}
+                {formattedSettlementBalance}
               </span>
             </div>
+            {usesNativeSolSettlement ? (
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                A small SOL buffer stays reserved for ATA rent and transaction
+                fees while the wallet wraps settlement SOL inside the purchase
+                transaction.
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="space-y-3 rounded-md border border-border-subtle bg-surface-2/70 p-4 text-sm">
@@ -336,8 +373,8 @@ function LivePurchasePanel({
 
         {!hasSufficientBalance && walletReady ? (
           <p className="font-mono text-[10px] text-warning">
-            Connected USDC balance looks lower than the estimated cost for this
-            quantity.
+            Connected SOL balance looks lower than the estimated cost plus the
+            temporary account buffer for this quantity.
           </p>
         ) : null}
 

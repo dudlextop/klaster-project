@@ -59,3 +59,4 @@ docs/
 AGENTS.md
 **/*.md
 !README.md
+.env*.local

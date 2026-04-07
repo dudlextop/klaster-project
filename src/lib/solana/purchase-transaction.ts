@@ -1,6 +1,12 @@
 import type { SolanaClient, TransactionInstructionInput } from "@solana/client";
 import type { Address, TransactionSigner } from "@solana/kit";
-import { getCreateAssociatedTokenIdempotentInstructionAsync } from "@solana-program/token-2022";
+import { getCreateAssociatedTokenIdempotentInstructionAsync } from "@solana-program/token";
+import {
+  buildWrappedSolUnwrapInstruction,
+  buildWrappedSolWrapInstructions,
+  isWrappedSolMint,
+} from "@/lib/solana/settlement";
+import { parseSettlementAtomicAmount } from "@/lib/solana/vault-transaction-accounts";
 import { getPurchaseSharesInstructionAsync } from "@/programs/klaster-vault/generated/instructions/purchaseShares";
 import type { PurchasePanelConfig } from "@/server/vaults/public-read-model/types";
 
@@ -33,13 +39,30 @@ export async function buildPurchaseTransactionPlan({
     shareHelper.deriveAssociatedTokenAddress(buyerSigner.address),
   ]);
 
-  const instructions: TransactionInstructionInput[] = [
-    await getCreateAssociatedTokenIdempotentInstructionAsync({
-      mint: purchaseConfig.usdcMint as Address<string>,
-      owner: buyerSigner.address as Address<string>,
-      payer: buyerSigner,
-      tokenProgram: purchaseConfig.usdcTokenProgram as Address<string>,
-    }),
+  const instructions: TransactionInstructionInput[] = [];
+  const paymentAmount =
+    BigInt(shares) * parseSettlementAtomicAmount(purchaseConfig.sharePriceUsdc);
+
+  if (isWrappedSolMint(purchaseConfig.usdcMint)) {
+    instructions.push(
+      ...(await buildWrappedSolWrapInstructions({
+        amountLamports: paymentAmount,
+        ownerSigner: buyerSigner,
+        tokenAccount: buyerUsdcTokenAccount,
+      })),
+    );
+  } else {
+    instructions.push(
+      await getCreateAssociatedTokenIdempotentInstructionAsync({
+        mint: purchaseConfig.usdcMint as Address<string>,
+        owner: buyerSigner.address as Address<string>,
+        payer: buyerSigner,
+        tokenProgram: purchaseConfig.usdcTokenProgram as Address<string>,
+      }),
+    );
+  }
+
+  instructions.push(
     await getCreateAssociatedTokenIdempotentInstructionAsync({
       mint: purchaseConfig.shareMint as Address<string>,
       owner: buyerSigner.address as Address<string>,
@@ -64,7 +87,16 @@ export async function buildPurchaseTransactionPlan({
         programAddress: purchaseConfig.programAddress as Address<string>,
       },
     ),
-  ];
+  );
+
+  if (isWrappedSolMint(purchaseConfig.usdcMint)) {
+    instructions.push(
+      buildWrappedSolUnwrapInstruction({
+        ownerSigner: buyerSigner,
+        tokenAccount: buyerUsdcTokenAccount,
+      }),
+    );
+  }
 
   return {
     buyerShareTokenAccount,

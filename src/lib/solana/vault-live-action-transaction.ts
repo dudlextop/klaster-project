@@ -1,12 +1,17 @@
 import type { SolanaClient, TransactionInstructionInput } from "@solana/client";
 import type { Address, TransactionSigner } from "@solana/kit";
-import { getCreateAssociatedTokenIdempotentInstructionAsync } from "@solana-program/token-2022";
+import { getCreateAssociatedTokenIdempotentInstructionAsync } from "@solana-program/token";
+import {
+  buildWrappedSolUnwrapInstruction,
+  buildWrappedSolWrapInstructions,
+  isWrappedSolMint,
+} from "@/lib/solana/settlement";
 import type {
   OperatorDepositBundle,
   PortfolioClaimBundle,
 } from "@/lib/solana/vault-live-actions";
 import {
-  parseUsdcAtomicAmount,
+  parseSettlementAtomicAmount,
   resolveVaultTransactionAccounts,
 } from "@/lib/solana/vault-transaction-accounts";
 import {
@@ -51,13 +56,29 @@ export async function buildOperatorDepositTransactionPlan({
     );
   }
 
-  const instructions: TransactionInstructionInput[] = [
-    await getCreateAssociatedTokenIdempotentInstructionAsync({
-      mint: bundle.usdcMint as Address<string>,
-      owner: bundle.operatorWalletAddress as Address<string>,
-      payer: operatorSigner,
-      tokenProgram: bundle.usdcTokenProgram as Address<string>,
-    }),
+  const amount = parseSettlementAtomicAmount(bundle.amountUsdc);
+  const instructions: TransactionInstructionInput[] = [];
+
+  if (isWrappedSolMint(bundle.usdcMint)) {
+    instructions.push(
+      ...(await buildWrappedSolWrapInstructions({
+        amountLamports: amount,
+        ownerSigner: operatorSigner,
+        tokenAccount: transactionAccounts.operatorUsdcTokenAccount,
+      })),
+    );
+  } else {
+    instructions.push(
+      await getCreateAssociatedTokenIdempotentInstructionAsync({
+        mint: bundle.usdcMint as Address<string>,
+        owner: bundle.operatorWalletAddress as Address<string>,
+        payer: operatorSigner,
+        tokenProgram: bundle.usdcTokenProgram as Address<string>,
+      }),
+    );
+  }
+
+  instructions.push(
     await getCreateAssociatedTokenIdempotentInstructionAsync({
       mint: bundle.usdcMint as Address<string>,
       owner: transactionAccounts.vaultAuthority,
@@ -72,7 +93,7 @@ export async function buildOperatorDepositTransactionPlan({
     }),
     getDepositRevenueInstruction(
       {
-        amount: parseUsdcAtomicAmount(bundle.amountUsdc),
+        amount,
         operator: operatorSigner,
         operatorUsdcTokenAccount: transactionAccounts.operatorUsdcTokenAccount,
         platformTreasuryTokenAccount:
@@ -86,7 +107,16 @@ export async function buildOperatorDepositTransactionPlan({
         programAddress: bundle.programAddress as Address<string>,
       },
     ),
-  ];
+  );
+
+  if (isWrappedSolMint(bundle.usdcMint)) {
+    instructions.push(
+      buildWrappedSolUnwrapInstruction({
+        ownerSigner: operatorSigner,
+        tokenAccount: transactionAccounts.operatorUsdcTokenAccount,
+      }),
+    );
+  }
 
   return {
     instructions,
@@ -108,7 +138,7 @@ export async function buildPortfolioClaimTransactionPlan({
 
   if (!transactionAccounts.holderUsdcTokenAccount) {
     throw new Error(
-      "Claim preparation could not derive the holder USDC token account.",
+      "Claim preparation could not derive the holder SOL settlement account.",
     );
   }
 
@@ -133,6 +163,15 @@ export async function buildPortfolioClaimTransactionPlan({
       },
     ),
   ];
+
+  if (isWrappedSolMint(bundle.usdcMint)) {
+    instructions.push(
+      buildWrappedSolUnwrapInstruction({
+        ownerSigner: holderSigner,
+        tokenAccount: transactionAccounts.holderUsdcTokenAccount,
+      }),
+    );
+  }
 
   return {
     instructions,

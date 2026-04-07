@@ -158,14 +158,14 @@ export function OperatorDepositRail({
 
       <label className="block space-y-2" htmlFor={amountId}>
         <span className="terminal-label block text-foreground">
-          Deposit amount (USDC)
+          Deposit amount (SOL)
         </span>
         <input
           className="terminal-input"
           id={amountId}
           inputMode="decimal"
           onChange={(event) => setAmountUsdc(event.currentTarget.value)}
-          placeholder="1000"
+          placeholder="1.8"
           value={amountUsdc}
         />
       </label>
@@ -186,7 +186,8 @@ export function OperatorDepositRail({
           </div>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
             Revenue deposits must be signed by the same wallet that owns the
-            current operator session.
+            current operator session. The transaction wraps the entered SOL
+            amount inside the live settlement rail automatically.
           </p>
         </div>
       ) : (

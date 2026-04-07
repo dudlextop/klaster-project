@@ -4,13 +4,18 @@ import {
   formatCompactNumber,
   formatDateLabel,
   formatPercent,
+  formatSolAmount,
   formatUsdcAmount,
   truncateAddress,
 } from "@/lib/format";
 
 describe("format helpers", () => {
-  it("formats USDC amounts with cents", () => {
-    expect(formatUsdcAmount(1234.5)).toBe("$1,234.50");
+  it("formats SOL amounts with the Solana marker", () => {
+    expect(formatSolAmount(1234.5)).toBe("◎1,234.50");
+  });
+
+  it("keeps the legacy settlement formatter mapped to SOL output", () => {
+    expect(formatUsdcAmount(0.125)).toBe("◎0.125");
   });
 
   it("formats the mainnet cluster label cleanly", () => {

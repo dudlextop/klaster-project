@@ -1,8 +1,7 @@
 import type { SolanaClient } from "@solana/client";
 import type { Address } from "@solana/kit";
+import { SETTLEMENT_DECIMALS } from "@/lib/solana/settlement";
 import { findVaultAuthorityPda } from "@/programs/klaster-vault/generated/pdas";
-
-export const USDC_DECIMALS = 6;
 
 type SplTokenCapableClient = Pick<SolanaClient, "splToken">;
 
@@ -78,23 +77,29 @@ export async function resolveVaultTransactionAccounts(
   };
 }
 
-export function toUsdcAtomicAmount(value: number) {
-  return BigInt(Math.round(value * 10 ** USDC_DECIMALS));
+export function toSettlementAtomicAmount(value: number) {
+  return BigInt(Math.round(value * 10 ** SETTLEMENT_DECIMALS));
 }
 
-export function parseUsdcAtomicAmount(value: number | string) {
+export function parseSettlementAtomicAmount(value: number | string) {
   const normalizedValue =
-    typeof value === "number" ? value.toFixed(USDC_DECIMALS) : value.trim();
+    typeof value === "number"
+      ? value.toFixed(SETTLEMENT_DECIMALS)
+      : value.trim();
   const match = normalizedValue.match(/^([0-9]+)(?:\.([0-9]+))?$/);
 
   if (!match) {
-    throw new Error(`Invalid USDC amount: ${value}`);
+    throw new Error(`Invalid SOL amount: ${value}`);
   }
 
   const [, wholePart, fractionalPart = ""] = match;
   const normalizedFraction = fractionalPart
-    .padEnd(USDC_DECIMALS, "0")
-    .slice(0, USDC_DECIMALS);
+    .padEnd(SETTLEMENT_DECIMALS, "0")
+    .slice(0, SETTLEMENT_DECIMALS);
 
   return BigInt(`${wholePart}${normalizedFraction}`);
 }
+
+export const USDC_DECIMALS = SETTLEMENT_DECIMALS;
+export const toUsdcAtomicAmount = toSettlementAtomicAmount;
+export const parseUsdcAtomicAmount = parseSettlementAtomicAmount;

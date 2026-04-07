@@ -1,17 +1,20 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
   createDefaultClient,
+  fetchBalance,
+  requestAirdrop,
   TOKEN_2022_PROGRAM_ADDRESS,
   TOKEN_PROGRAM_ADDRESS,
+  WRAPPED_SOL_MINT,
 } from "@solana/client";
 import type { Address } from "@solana/kit";
 import { createKeyPairSignerFromBytes } from "@solana/signers";
 import { buildAdminApprovalTransactionPlan } from "@/lib/solana/admin-approval-transaction";
 import { buildPurchaseTransactionPlan } from "@/lib/solana/purchase-transaction";
 import { buildOperatorDepositTransactionPlan } from "@/lib/solana/vault-live-action-transaction";
+import { parseSettlementAtomicAmount } from "@/lib/solana/vault-transaction-accounts";
 import { fetchVault } from "@/programs/klaster-vault/generated/accounts/vault";
 import type { AppSession } from "@/server/auth/session";
 import { ingestHeliusWebhook } from "@/server/helius/webhooks";
@@ -23,18 +26,16 @@ import {
 
 const CANONICAL_SLUG = "demo-vault";
 const PURCHASE_SHARES = 4;
-const DEPOSIT_AMOUNT_USDC = "180";
+const SHARE_PRICE_SOL = 0.15;
+const CAMPAIGN_TARGET_SOL = 18;
+const VAULT_VALUATION_SOL = 60;
+const DEPOSIT_AMOUNT_SOL = "0.75";
+const MIN_BOOTSTRAP_SOL_BALANCE = BigInt(1_500_000_000);
 const MVP_PROOF_HASH = createHash("sha256")
   .update("klasterai-demo-vault-proof-v1")
   .digest("hex");
-const SPL_TOKEN_BIN = join(
-  process.env.HOME ?? "",
-  ".local/share/solana/install/active_release/bin/spl-token",
-);
-const SOLANA_KEYPAIR_PATH = join(
-  process.env.HOME ?? "",
-  ".config/solana/id.json",
-);
+const SOLANA_BIN = `${process.env.HOME ?? ""}/.local/share/solana/install/active_release/bin/solana`;
+const SOLANA_KEYPAIR_PATH = `${process.env.HOME ?? ""}/.config/solana/id.json`;
 
 type ProfileRow = {
   display_name: string | null;
@@ -85,16 +86,28 @@ function getNowIso(offsetMinutes = 0) {
   return new Date(Date.now() + offsetMinutes * 60_000).toISOString();
 }
 
+async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function getClusterMoniker() {
   return requireEnv("NEXT_PUBLIC_SOLANA_CLUSTER") as ClusterMoniker;
 }
 
-function runSplToken(args: string[]) {
-  if (!existsSync(SPL_TOKEN_BIN)) {
-    throw new Error(`spl-token binary was not found at ${SPL_TOKEN_BIN}`);
+function getSettlementMintAddress() {
+  return (
+    process.env.SETTLEMENT_MINT_ADDRESS?.trim() ||
+    process.env.USDC_MINT_ADDRESS?.trim() ||
+    WRAPPED_SOL_MINT
+  );
+}
+
+function runSolana(args: string[]) {
+  if (!existsSync(SOLANA_BIN)) {
+    throw new Error(`solana binary was not found at ${SOLANA_BIN}`);
   }
 
-  const result = spawnSync(SPL_TOKEN_BIN, args, {
+  const result = spawnSync(SOLANA_BIN, args, {
     encoding: "utf8",
     env: process.env,
   });
@@ -103,27 +116,73 @@ function runSplToken(args: string[]) {
     throw new Error(
       result.stderr?.trim() ||
         result.stdout?.trim() ||
-        "spl-token command failed.",
+        "solana command failed.",
     );
   }
 
   return result.stdout.trim();
 }
 
-function runSplTokenAllowingAccountExists(args: string[]) {
+async function resetCanonicalVaultForSettlementMint(vaultId: string) {
+  const client = createSupabaseServiceRoleClient();
+  const [claims, deposits, purchases, taskStream, vault] = await Promise.all([
+    client.from("claims").delete().eq("vault_id", vaultId),
+    client.from("revenue_deposits").delete().eq("vault_id", vaultId),
+    client.from("purchases").delete().eq("vault_id", vaultId),
+    client.from("vault_task_stream_events").delete().eq("vault_id", vaultId),
+    client
+      .from("vaults")
+      .update({
+        campaign_raised_usdc: 0,
+        onchain_vault_address: null,
+        status: "pending_review",
+        token_mint_address: null,
+        verified_at: null,
+      })
+      .eq("id", vaultId),
+  ]);
+
+  for (const result of [claims, deposits, purchases, taskStream, vault]) {
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+  }
+}
+
+async function shouldResetCanonicalVaultForSettlementMint(vault: VaultRow) {
+  if (
+    vault.status !== "verified" ||
+    !vault.onchain_vault_address ||
+    !vault.token_mint_address
+  ) {
+    return false;
+  }
+
   try {
-    return runSplToken(args);
-  } catch (error) {
+    const solana = createDefaultClient({
+      cluster: getClusterMoniker(),
+      rpc: requireEnv("NEXT_PUBLIC_HELIUS_RPC_URL"),
+    });
+    const onchainVault = await fetchVault(
+      solana.runtime.rpc,
+      vault.onchain_vault_address as Address<string>,
+    );
+
     if (
-      error instanceof Error &&
-      /account already exists|account .* already exists|associated token account already exists/i.test(
-        error.message,
-      )
+      onchainVault.data.usdcMint === getSettlementMintAddress() &&
+      onchainVault.data.sharePriceUsdc ===
+        parseSettlementAtomicAmount(SHARE_PRICE_SOL)
     ) {
-      return null;
+      return false;
     }
 
-    throw error;
+    await resetCanonicalVaultForSettlementMint(vault.id);
+
+    return true;
+  } catch {
+    await resetCanonicalVaultForSettlementMint(vault.id);
+
+    return true;
   }
 }
 
@@ -182,14 +241,21 @@ async function ensureCanonicalVault(profileId: string) {
   if (existing.error) {
     throw new Error(existing.error.message);
   }
+  const existingVault = (existing.data as VaultRow | null) ?? null;
+
+  let preserveExistingLiveState = false;
+
+  if (existingVault?.status === "verified") {
+    preserveExistingLiveState =
+      !(await shouldResetCanonicalVaultForSettlementMint(existingVault));
+  }
 
   const basePayload = {
     asset_origin: "klaster_managed",
-    campaign_raised_usdc:
-      existing.data?.status === "verified"
-        ? existing.data.campaign_raised_usdc
-        : 0,
-    campaign_target_usdc: 3000,
+    campaign_raised_usdc: preserveExistingLiveState
+      ? existingVault?.campaign_raised_usdc
+      : 0,
+    campaign_target_usdc: CAMPAIGN_TARGET_SOL,
     hardware_summary: {
       cpu: "2x AMD EPYC 9654",
       gpu: "8x NVIDIA H100 SXM",
@@ -211,10 +277,10 @@ async function ensureCanonicalVault(profileId: string) {
       mode: "smart_auto_routing",
       status: "live_ready",
     },
-    share_price_usdc: 25,
+    share_price_usdc: SHARE_PRICE_SOL,
     slug: CANONICAL_SLUG,
     total_shares: 400,
-    valuation_usdc: 10000,
+    valuation_usdc: VAULT_VALUATION_SOL,
     yield_source_summary: [
       {
         allocationPct: 55,
@@ -237,23 +303,20 @@ async function ensureCanonicalVault(profileId: string) {
     ],
   };
 
-  if (existing.data) {
+  if (existingVault) {
     const updated = await client
       .from("vaults")
       .update({
         ...basePayload,
-        onchain_vault_address:
-          existing.data.status === "verified"
-            ? existing.data.onchain_vault_address
-            : null,
-        status:
-          existing.data.status === "verified" ? "verified" : "pending_review",
-        token_mint_address:
-          existing.data.status === "verified"
-            ? existing.data.token_mint_address
-            : null,
+        onchain_vault_address: preserveExistingLiveState
+          ? existingVault.onchain_vault_address
+          : null,
+        status: preserveExistingLiveState ? "verified" : "pending_review",
+        token_mint_address: preserveExistingLiveState
+          ? existingVault.token_mint_address
+          : null,
       })
-      .eq("id", existing.data.id)
+      .eq("id", existingVault.id)
       .select(
         "id, slug, status, onchain_vault_address, token_mint_address, campaign_raised_usdc, share_price_usdc",
       )
@@ -367,7 +430,7 @@ async function ensureActivityFixtures(vaultId: string) {
       {
         logged_at: getNowIso(-210),
         message: "Verified invoice bundle linked to the public sale rail.",
-        reward_delta_usdc: 18,
+        reward_delta_usdc: 0.18,
         source: "provider_ingest",
         status: "routing",
         vault_id: vaultId,
@@ -376,7 +439,7 @@ async function ensureActivityFixtures(vaultId: string) {
         logged_at: getNowIso(-160),
         message:
           "Inference demand shifted into the lower-latency enterprise lane.",
-        reward_delta_usdc: 26,
+        reward_delta_usdc: 0.26,
         source: "provider_ingest",
         status: "renting",
         vault_id: vaultId,
@@ -385,7 +448,7 @@ async function ensureActivityFixtures(vaultId: string) {
         logged_at: getNowIso(-90),
         message:
           "Benchmark refresh completed and health score remained above 96.",
-        reward_delta_usdc: 14,
+        reward_delta_usdc: 0.14,
         source: "provider_ingest",
         status: "training",
         vault_id: vaultId,
@@ -394,7 +457,7 @@ async function ensureActivityFixtures(vaultId: string) {
         logged_at: getNowIso(-25),
         message:
           "Buyer routing stayed inside the verified public issuance lane.",
-        reward_delta_usdc: 9,
+        reward_delta_usdc: 0.09,
         source: "provider_ingest",
         status: "routing",
         vault_id: vaultId,
@@ -471,51 +534,56 @@ async function sendInstructions(
   return (await solana.transaction.send(prepared)).toString();
 }
 
-async function ensureSettlementBalance(
-  mintAddress: string,
-  ownerAddress: string,
-) {
+async function ensureSolBalance(ownerAddress: string, minimumLamports: bigint) {
   const solana = createDefaultClient({
     cluster: getClusterMoniker(),
     rpc: requireEnv("NEXT_PUBLIC_HELIUS_RPC_URL"),
   });
-  const token = solana.splToken({
-    mint: mintAddress,
-    tokenProgram: "auto",
+  const owner = ownerAddress as Address<string>;
+  let currentBalance = await fetchBalance(solana, {
+    address: owner,
   });
-  const currentBalance = await token.fetchBalance(ownerAddress);
 
-  if (Number(currentBalance.uiAmount) >= 1000) {
+  if (currentBalance >= minimumLamports) {
     return;
   }
 
-  runSplTokenAllowingAccountExists([
-    "create-account",
-    mintAddress,
-    "--fee-payer",
-    SOLANA_KEYPAIR_PATH,
-    "--owner",
-    ownerAddress,
-    "--output",
-    "json-compact",
-    "--url",
-    requireEnv("NEXT_PUBLIC_SOLANA_CLUSTER"),
-  ]);
-  runSplToken([
-    "mint",
-    mintAddress,
-    "5000",
-    "--fee-payer",
-    SOLANA_KEYPAIR_PATH,
-    "--mint-authority",
-    SOLANA_KEYPAIR_PATH,
-    "--recipient-owner",
-    ownerAddress,
-    "--output",
-    "json-compact",
-    "--url",
-    requireEnv("NEXT_PUBLIC_SOLANA_CLUSTER"),
-  ]);
+  if (getClusterMoniker() !== "devnet") {
+    throw new Error(
+      "Bootstrap wallet is underfunded for the SOL demo rail and automatic top-ups are only enabled on devnet.",
+    );
+  }
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await requestAirdrop(solana, {
+        address: owner,
+        lamports: BigInt(2_000_000_000) as Parameters<
+          typeof requestAirdrop
+        >[1]["lamports"],
+      });
+    } catch {
+      runSolana([
+        "airdrop",
+        "2",
+        ownerAddress,
+        "--url",
+        requireEnv("NEXT_PUBLIC_SOLANA_CLUSTER"),
+      ]);
+    }
+    await sleep(1_500);
+    currentBalance = await fetchBalance(solana, {
+      address: owner,
+    });
+
+    if (currentBalance >= minimumLamports) {
+      return;
+    }
+  }
+
+  throw new Error(
+    "Bootstrap wallet could not be funded with enough devnet SOL for the live purchase and deposit rails.",
+  );
 }
 
 async function ensureLiveVault(profile: ProfileRow) {
@@ -623,9 +691,9 @@ async function ensureInitialPurchase(input: {
     vaultAddress: onchainVault.address,
   };
 
-  await ensureSettlementBalance(
-    purchaseConfig.usdcMint,
+  await ensureSolBalance(
     input.adminSigner.address.toString(),
+    MIN_BOOTSTRAP_SOL_BALANCE,
   );
 
   const plan = await buildPurchaseTransactionPlan({
@@ -699,11 +767,11 @@ async function ensureInitialDeposit(input: {
     rpc: requireEnv("NEXT_PUBLIC_HELIUS_RPC_URL"),
   });
   const bundle = {
-    amountUsdc: DEPOSIT_AMOUNT_USDC,
+    amountUsdc: DEPOSIT_AMOUNT_SOL,
     operatorWalletAddress: input.adminSigner.address.toString(),
     platformTreasuryOwnerAddress: requireEnv("SOLANA_ADMIN_MULTISIG"),
     programAddress: requireEnv("NEXT_PUBLIC_PROGRAM_ID_KLASTER_VAULT"),
-    usdcMint: requireEnv("USDC_MINT_ADDRESS"),
+    usdcMint: getSettlementMintAddress(),
     usdcTokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultAddress: input.vault.onchain_vault_address as string,
     vaultId: input.vault.id,
@@ -719,7 +787,7 @@ async function ensureInitialDeposit(input: {
     input.adminSigner,
     solana,
   );
-  const grossAmountUsdc = Number(DEPOSIT_AMOUNT_USDC);
+  const grossAmountUsdc = Number(DEPOSIT_AMOUNT_SOL);
   const platformFeeAmountUsdc = Number((grossAmountUsdc * 0.1).toFixed(6));
   const netAmountUsdc = Number(
     (grossAmountUsdc - platformFeeAmountUsdc).toFixed(6),
@@ -755,7 +823,6 @@ async function main() {
   requireEnv("PINATA_JWT");
   requireEnv("SESSION_SECRET");
   requireEnv("SOLANA_ADMIN_MULTISIG");
-  requireEnv("USDC_MINT_ADDRESS");
 
   const adminSigner = await loadAdminSigner();
   const profile = await ensureProfile(adminSigner.address.toString());
@@ -778,10 +845,10 @@ async function main() {
         adminWalletAddress: adminSigner.address.toString(),
         depositSignature,
         purchaseSignature,
+        settlementMintAddress: getSettlementMintAddress(),
         slug: finalVault.slug,
         status: finalVault.status,
         tokenMintAddress: finalVault.token_mint_address,
-        usdcMintAddress: requireEnv("USDC_MINT_ADDRESS"),
         vaultAddress: finalVault.onchain_vault_address,
         vaultId: finalVault.id,
       },

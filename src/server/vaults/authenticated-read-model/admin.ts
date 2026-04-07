@@ -1,3 +1,4 @@
+import { formatUsdcAmount } from "@/lib/format";
 import { createSupabaseServiceRoleClient } from "@/server/supabase/service-role";
 import { formatReviewLabel } from "@/server/vaults/authenticated-read-model/shared";
 import type {
@@ -250,7 +251,7 @@ export async function getLiveAdminReviewDetail(
         },
         {
           label: "Share price",
-          value: `$${toNumber(vaultResult.data.share_price_usdc).toFixed(2)}`,
+          value: formatUsdcAmount(toNumber(vaultResult.data.share_price_usdc)),
         },
         {
           label: "Total shares",
@@ -258,11 +259,11 @@ export async function getLiveAdminReviewDetail(
         },
         {
           label: "Valuation",
-          value: `$${toNumber(vaultResult.data.valuation_usdc).toLocaleString()}`,
+          value: formatUsdcAmount(toNumber(vaultResult.data.valuation_usdc)),
         },
         {
           label: "Campaign progress",
-          value: `$${toNumber(vaultResult.data.campaign_raised_usdc).toLocaleString()} / $${toNumber(vaultResult.data.campaign_target_usdc).toLocaleString()}`,
+          value: `${formatUsdcAmount(toNumber(vaultResult.data.campaign_raised_usdc))} / ${formatUsdcAmount(toNumber(vaultResult.data.campaign_target_usdc))}`,
         },
         {
           label: "Performance fee",

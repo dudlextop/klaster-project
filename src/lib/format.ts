@@ -1,10 +1,8 @@
 import type { SolanaCluster } from "@/lib/env";
 
-const usdcFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
-  maximumFractionDigits: 2,
+const solFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 4,
   minimumFractionDigits: 2,
-  style: "currency",
 });
 const compactNumberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
@@ -25,8 +23,12 @@ const longDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
 });
 
+export function formatSolAmount(value: number) {
+  return `◎${solFormatter.format(value)}`;
+}
+
 export function formatUsdcAmount(value: number) {
-  return usdcFormatter.format(value);
+  return formatSolAmount(value);
 }
 
 export function formatCompactNumber(value: number) {

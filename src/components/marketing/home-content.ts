@@ -139,7 +139,7 @@ export const heroHighlights = [
 
 export const evidenceStats = [
   { label: "Approved vaults only", value: "100%" },
-  { label: "Public sale rail", value: "USDC" },
+  { label: "Public sale rail", value: "SOL" },
   { label: "Routing posture", value: "Seeded" },
 ] as const;
 

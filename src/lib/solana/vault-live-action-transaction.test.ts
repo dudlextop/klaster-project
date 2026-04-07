@@ -5,18 +5,28 @@ import type {
 } from "@/lib/solana/vault-live-actions";
 
 const {
+  mockBuildWrappedSolUnwrapInstruction,
+  mockBuildWrappedSolWrapInstructions,
   mockGetClaimYieldInstructionAsync,
   mockGetCreateAssociatedTokenIdempotentInstructionAsync,
   mockGetDepositRevenueInstruction,
+  mockIsWrappedSolMint,
+  mockParseSettlementAtomicAmount,
   mockResolveVaultTransactionAccounts,
 } = vi.hoisted(() => ({
+  mockBuildWrappedSolUnwrapInstruction: vi.fn(),
+  mockBuildWrappedSolWrapInstructions: vi.fn(),
   mockGetClaimYieldInstructionAsync: vi.fn(),
   mockGetCreateAssociatedTokenIdempotentInstructionAsync: vi.fn(),
   mockGetDepositRevenueInstruction: vi.fn(),
+  mockIsWrappedSolMint: vi.fn(),
+  mockParseSettlementAtomicAmount: vi.fn((value: string) =>
+    BigInt(value.replace(".", "")),
+  ),
   mockResolveVaultTransactionAccounts: vi.fn(),
 }));
 
-vi.mock("@solana-program/token-2022", () => ({
+vi.mock("@solana-program/token", () => ({
   getCreateAssociatedTokenIdempotentInstructionAsync:
     mockGetCreateAssociatedTokenIdempotentInstructionAsync,
 }));
@@ -27,10 +37,14 @@ vi.mock("@/programs/klaster-vault/generated/instructions", () => ({
 }));
 
 vi.mock("@/lib/solana/vault-transaction-accounts", () => ({
-  parseUsdcAtomicAmount: vi.fn((value: string) =>
-    BigInt(value.replace(".", "")),
-  ),
+  parseSettlementAtomicAmount: mockParseSettlementAtomicAmount,
   resolveVaultTransactionAccounts: mockResolveVaultTransactionAccounts,
+}));
+
+vi.mock("@/lib/solana/settlement", () => ({
+  buildWrappedSolUnwrapInstruction: mockBuildWrappedSolUnwrapInstruction,
+  buildWrappedSolWrapInstructions: mockBuildWrappedSolWrapInstructions,
+  isWrappedSolMint: mockIsWrappedSolMint,
 }));
 
 import {
@@ -86,6 +100,13 @@ beforeEach(() => {
     revenuePoolTokenAccount: "revenue-pool-ata",
     vaultAuthority: "vault-authority",
   });
+  mockBuildWrappedSolWrapInstructions.mockResolvedValue([
+    "ix-wrap-sol-1",
+    "ix-wrap-sol-2",
+    "ix-wrap-sol-3",
+  ]);
+  mockBuildWrappedSolUnwrapInstruction.mockReturnValue("ix-unwrap-sol");
+  mockIsWrappedSolMint.mockReturnValue(false);
   mockGetCreateAssociatedTokenIdempotentInstructionAsync
     .mockResolvedValueOnce("ix-create-operator-usdc")
     .mockResolvedValueOnce("ix-create-revenue-pool")
@@ -149,6 +170,45 @@ describe("vault live action transaction helpers", () => {
       {
         programAddress: "program-address",
       },
+    );
+  });
+
+  it("wraps and unwraps SOL settlement accounts when the vault uses wrapped SOL", async () => {
+    mockIsWrappedSolMint.mockReturnValue(true);
+    mockGetCreateAssociatedTokenIdempotentInstructionAsync.mockReset();
+    mockGetCreateAssociatedTokenIdempotentInstructionAsync
+      .mockResolvedValueOnce("ix-create-revenue-pool")
+      .mockResolvedValueOnce("ix-create-treasury-usdc");
+
+    const plan = await buildOperatorDepositTransactionPlan({
+      bundle: createOperatorBundle({
+        amountUsdc: "1.8",
+        usdcMint: "So11111111111111111111111111111111111111112",
+      }),
+      operatorSigner: mockDepositSigner as never,
+      solana: mockSolana as never,
+    });
+
+    expect(plan.instructions).toEqual([
+      "ix-wrap-sol-1",
+      "ix-wrap-sol-2",
+      "ix-wrap-sol-3",
+      "ix-create-revenue-pool",
+      "ix-create-treasury-usdc",
+      "ix-deposit-revenue",
+      "ix-unwrap-sol",
+    ]);
+    expect(mockBuildWrappedSolWrapInstructions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerSigner: mockDepositSigner,
+        tokenAccount: "operator-usdc-ata",
+      }),
+    );
+    expect(mockBuildWrappedSolUnwrapInstruction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerSigner: mockDepositSigner,
+        tokenAccount: "operator-usdc-ata",
+      }),
     );
   });
 });

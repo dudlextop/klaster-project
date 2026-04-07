@@ -298,7 +298,7 @@ export function OperatorDraftPageView({
               </legend>
               <label className="space-y-2">
                 <span className="terminal-label block text-foreground">
-                  Valuation (USDC)
+                  Valuation (SOL)
                 </span>
                 <input
                   className="terminal-input"
@@ -334,7 +334,7 @@ export function OperatorDraftPageView({
               </legend>
               <label className="space-y-2">
                 <span className="terminal-label block text-foreground">
-                  Share price (USDC)
+                  Share price (SOL)
                 </span>
                 <input
                   className="terminal-input"
