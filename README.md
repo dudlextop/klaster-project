@@ -92,6 +92,10 @@ If deposits, claims, and vault posture are not visible, investors cannot reason 
 - Solana cluster: `devnet`
 - Program ID: `23G3S9gNH4x3PPJ8sJwvLfjFhQSJ2JJukZGrR29RQiTe`
 - Canonical live vault route: [https://klaster-project.vercel.app/vaults/demo-vault](https://klaster-project.vercel.app/vaults/demo-vault)
+- Canonical onchain vault: `8qjM5GtsQ848S22q3E8qsSucF8TXLYRogZRmj1et6jGg`
+- Share mint: `HSwFCness1knruXbbnGjfqvmVwUUBr39eEi5xR2Pt7nV`
+- Settlement mint: `So11111111111111111111111111111111111111112`
+- Operator settlement ATA: `Guphz64ZzhfSFCjMrTMazqoxMUmm1EVKncN6fmekFDS9`
 
 The project already supports:
 
@@ -100,6 +104,24 @@ The project already supports:
 - a real devnet share purchase flow
 - a real devnet revenue deposit flow
 - mirrored read surfaces for marketplace and operations
+
+### Native SOL Purchase Rail
+
+The marketplace accepts ordinary **Devnet SOL** from the connected wallet.
+
+Internally the settlement mint is **wrapped SOL** (`So111...`), so the client
+prepares the required token accounts and wraps native SOL inside the purchase
+transaction before calling the Anchor program. Buyers do **not** need to hold a
+separate WSOL balance manually.
+
+### Verified Onchain Transactions
+
+- Fresh-wallet share purchase:
+  [5tVygc3Kch1HV8377LAQEzECUq2p5GqQVuftuKGN7ikYc7gUcbpcmnyS7civN53j5ZaLU2WJicYfQn1L41CL4qKg](https://explorer.solana.com/tx/5tVygc3Kch1HV8377LAQEzECUq2p5GqQVuftuKGN7ikYc7gUcbpcmnyS7civN53j5ZaLU2WJicYfQn1L41CL4qKg?cluster=devnet)
+- Operator settlement ATA repair:
+  [5XgZx4ygz1tFKFeNawiLwG6rZrxGLb9fTrEZiMkcceBPE5wXAbdJQeG42xxeyEnCKJJFbcm1yzHME52ZmNBzPwDy](https://explorer.solana.com/tx/5XgZx4ygz1tFKFeNawiLwG6rZrxGLb9fTrEZiMkcceBPE5wXAbdJQeG42xxeyEnCKJJFbcm1yzHME52ZmNBzPwDy?cluster=devnet)
+- Revenue deposit:
+  [5FvmWHF6D3KCBoUqyPkyLa8bmw5h9X4ydF4EeBQ8KrQuRgyRZNBnd79x3sxeAnWLw1J2GdXqefcdZs5NqqrQh6P8](https://explorer.solana.com/tx/5FvmWHF6D3KCBoUqyPkyLa8bmw5h9X4ydF4EeBQ8KrQuRgyRZNBnd79x3sxeAnWLw1J2GdXqefcdZs5NqqrQh6P8?cluster=devnet)
 
 ---
 
@@ -117,6 +139,19 @@ KlasterAI follows a simple lifecycle:
 This is not a generic token launcher.
 
 It is a controlled issuance and revenue-accounting system for real compute infrastructure.
+
+### Purchase Execution Model
+
+For a live purchase the client prepares a single transaction that:
+
+1. creates any missing token accounts idempotently
+2. wraps native SOL into the settlement account when the vault settles in WSOL
+3. invokes `purchaseShares` on the `klaster_vault` program
+4. leaves the vault and operator settlement wiring intact for later purchases
+
+That last point matters operationally: the public purchase rail and operator
+revenue rail both depend on stable settlement account wiring, so the app now
+guards those accounts explicitly before sending transactions.
 
 ---
 
@@ -254,7 +289,7 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 | `PINATA_JWT` | Pinata auth |
 | `SESSION_SECRET` | signs session and challenge tokens |
 | `SOLANA_ADMIN_MULTISIG` | admin / treasury owner |
-| `USDC_MINT_ADDRESS` | settlement mint for the active cluster |
+| `USDC_MINT_ADDRESS` | legacy settlement mint variable; current deployment settles in wrapped SOL |
 | `NEXT_PUBLIC_PROGRAM_ID_KLASTER_VAULT` | public-facing vault program id |
 | `PROGRAM_ID_KLASTER_VAULT` | server/tooling fallback program id |
 
