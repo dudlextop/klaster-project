@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/button";
 import { truncateAddress } from "@/lib/format";
 import type { PreparedAdminApproval } from "@/lib/solana/admin-approval";
 import { buildAdminApprovalTransactionPlan } from "@/lib/solana/admin-approval-transaction";
-import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
+import {
+  createPreferredWalletTransactionSigner,
+  resolveDirectWalletPreparedTransaction,
+} from "@/lib/solana/wallet-transaction-signer";
 import type { AdminReviewDetailPageData } from "@/server/vaults/authenticated";
 
 type AdminApprovalRailProps = {
@@ -129,7 +132,11 @@ export function AdminApprovalRail({
         instructions: plan.instructions,
         version: "legacy",
       });
-      const submittedSignature = await sendPrepared(prepared, {
+      const directPrepared = resolveDirectWalletPreparedTransaction(
+        prepared,
+        wrappedSigner,
+      );
+      const submittedSignature = await sendPrepared(directPrepared, {
         commitment: "confirmed",
       });
 

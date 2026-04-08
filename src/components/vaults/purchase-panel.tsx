@@ -33,7 +33,10 @@ import {
   SOL_WRAP_BUFFER_LAMPORTS,
 } from "@/lib/solana/settlement";
 import { toSettlementAtomicAmount } from "@/lib/solana/vault-transaction-accounts";
-import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
+import {
+  createPreferredWalletTransactionSigner,
+  resolveDirectWalletPreparedTransaction,
+} from "@/lib/solana/wallet-transaction-signer";
 import type { PurchasePanelConfig } from "@/server/vaults/public";
 
 type PurchasePanelProps = {
@@ -204,8 +207,12 @@ function LivePurchasePanel({
         instructions: plan.instructions,
         version: "legacy",
       });
+      const directPrepared = resolveDirectWalletPreparedTransaction(
+        prepared,
+        wrappedSigner,
+      );
 
-      await sendPrepared(prepared, {
+      await sendPrepared(directPrepared, {
         commitment: "confirmed",
       });
     } catch (error) {

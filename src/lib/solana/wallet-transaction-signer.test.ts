@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
+import {
+  createPreferredWalletTransactionSigner,
+  resolveDirectWalletPreparedTransaction,
+} from "@/lib/solana/wallet-transaction-signer";
 
 type WalletSession = Parameters<
   typeof createPreferredWalletTransactionSigner
@@ -29,8 +32,8 @@ describe("createPreferredWalletTransactionSigner", () => {
       commitment: "confirmed",
     });
 
-    expect(signer.mode).toBe("send");
-    expect("signAndSendTransactions" in signer.signer).toBe(true);
+    expect(signer.mode).toBe("partial");
+    expect("signTransactions" in signer.signer).toBe(true);
   });
 
   it("falls back to the client wallet signer wrapper when sendTransaction is absent", () => {
@@ -50,5 +53,33 @@ describe("createPreferredWalletTransactionSigner", () => {
 
     expect(signer.mode).toBe("partial");
     expect("signTransactions" in signer.signer).toBe(true);
+  });
+
+  it("removes the transaction executor plan for partial wallet signers", () => {
+    const signer = {
+      mode: "partial" as const,
+      signer: {
+        address: accountAddress,
+        signTransactions: vi.fn(),
+      },
+    };
+    const prepared = {
+      commitment: "confirmed" as const,
+      feePayer: accountAddress,
+      instructions: [],
+      lifetime: {
+        blockhash: "blockhash" as never,
+        lastValidBlockHeight: BigInt(1),
+      },
+      message: {} as never,
+      mode: "partial" as const,
+      plan: {} as never,
+      version: "legacy" as const,
+    };
+
+    const resolved = resolveDirectWalletPreparedTransaction(prepared, signer);
+
+    expect(resolved.plan).toBeUndefined();
+    expect(resolved.mode).toBe("partial");
   });
 });

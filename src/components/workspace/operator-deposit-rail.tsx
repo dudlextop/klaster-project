@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/button";
 import { truncateAddress } from "@/lib/format";
 import { buildOperatorDepositTransactionPlan } from "@/lib/solana/vault-live-action-transaction";
 import type { OperatorDepositBundle } from "@/lib/solana/vault-live-actions";
-import { createPreferredWalletTransactionSigner } from "@/lib/solana/wallet-transaction-signer";
+import {
+  createPreferredWalletTransactionSigner,
+  resolveDirectWalletPreparedTransaction,
+} from "@/lib/solana/wallet-transaction-signer";
 import type { OperatorVaultDetailPageData } from "@/server/vaults/authenticated";
 
 type OperatorDepositRailProps = {
@@ -120,7 +123,11 @@ export function OperatorDepositRail({
         instructions: plan.instructions,
         version: "legacy",
       });
-      const nextSignature = await sendPrepared(prepared, {
+      const directPrepared = resolveDirectWalletPreparedTransaction(
+        prepared,
+        wrappedSigner,
+      );
+      const nextSignature = await sendPrepared(directPrepared, {
         commitment: "confirmed",
       });
 
