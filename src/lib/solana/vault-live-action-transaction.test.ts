@@ -196,7 +196,6 @@ describe("vault live action transaction helpers", () => {
       "ix-create-revenue-pool",
       "ix-create-treasury-usdc",
       "ix-deposit-revenue",
-      "ix-unwrap-sol",
     ]);
     expect(mockBuildWrappedSolWrapInstructions).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -204,11 +203,6 @@ describe("vault live action transaction helpers", () => {
         tokenAccount: "operator-usdc-ata",
       }),
     );
-    expect(mockBuildWrappedSolUnwrapInstruction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ownerSigner: mockDepositSigner,
-        tokenAccount: "operator-usdc-ata",
-      }),
-    );
+    expect(mockBuildWrappedSolUnwrapInstruction).not.toHaveBeenCalled();
   });
 });

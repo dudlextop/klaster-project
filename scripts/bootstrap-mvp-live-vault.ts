@@ -11,10 +11,14 @@ import {
 } from "@solana/client";
 import type { Address } from "@solana/kit";
 import { createKeyPairSignerFromBytes } from "@solana/signers";
+import { getCreateAssociatedTokenIdempotentInstructionAsync } from "@solana-program/token";
 import { buildAdminApprovalTransactionPlan } from "@/lib/solana/admin-approval-transaction";
 import { buildPurchaseTransactionPlan } from "@/lib/solana/purchase-transaction";
 import { buildOperatorDepositTransactionPlan } from "@/lib/solana/vault-live-action-transaction";
-import { parseSettlementAtomicAmount } from "@/lib/solana/vault-transaction-accounts";
+import {
+  parseSettlementAtomicAmount,
+  resolveVaultTransactionAccounts,
+} from "@/lib/solana/vault-transaction-accounts";
 import { fetchVault } from "@/programs/klaster-vault/generated/accounts/vault";
 import type { AppSession } from "@/server/auth/session";
 import { ingestHeliusWebhook } from "@/server/helius/webhooks";
@@ -599,6 +603,11 @@ async function ensureLiveVault(profile: ProfileRow) {
     vault.onchain_vault_address &&
     vault.token_mint_address
   ) {
+    await ensureVerifiedVaultTokenAccounts({
+      adminSigner,
+      vaultAddress: vault.onchain_vault_address,
+    });
+
     return {
       adminSigner,
       vault,
@@ -639,10 +648,77 @@ async function ensureLiveVault(profile: ProfileRow) {
     session,
   );
 
+  const verifiedVault = await readVault(vault.id);
+
+  await ensureVerifiedVaultTokenAccounts({
+    adminSigner,
+    vaultAddress: verifiedVault.onchain_vault_address as string,
+  });
+
   return {
     adminSigner,
-    vault: await readVault(vault.id),
+    vault: verifiedVault,
   };
+}
+
+async function ensureVerifiedVaultTokenAccounts(input: {
+  adminSigner: Awaited<ReturnType<typeof loadAdminSigner>>;
+  vaultAddress: string;
+}) {
+  const solana = createDefaultClient({
+    cluster: getClusterMoniker(),
+    rpc: requireEnv("NEXT_PUBLIC_HELIUS_RPC_URL"),
+  });
+  const onchainVault = await fetchVault(
+    solana.runtime.rpc,
+    input.vaultAddress as Address<string>,
+  );
+  const expectedAccounts = await resolveVaultTransactionAccounts({
+    adminMultisig: requireEnv("SOLANA_ADMIN_MULTISIG") as Address<string>,
+    operatorAddress: onchainVault.data.operator,
+    shareMint: onchainVault.data.shareMint,
+    shareTokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+    solana,
+    usdcMint: onchainVault.data.usdcMint,
+    usdcTokenProgram: TOKEN_PROGRAM_ADDRESS,
+    vaultAddress: onchainVault.address,
+  });
+
+  if (
+    onchainVault.data.operatorSettlementTokenAccount !==
+      expectedAccounts.operatorSettlementTokenAccount ||
+    onchainVault.data.platformTreasuryTokenAccount !==
+      expectedAccounts.platformTreasuryTokenAccount ||
+    onchainVault.data.revenuePoolTokenAccount !==
+      expectedAccounts.revenuePoolTokenAccount
+  ) {
+    throw new Error(
+      "Verified vault token account wiring no longer matches the canonical ATA derivation.",
+    );
+  }
+
+  const repairInstructions = await Promise.all([
+    getCreateAssociatedTokenIdempotentInstructionAsync({
+      mint: onchainVault.data.usdcMint,
+      owner: onchainVault.data.operator,
+      payer: input.adminSigner,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    }),
+    getCreateAssociatedTokenIdempotentInstructionAsync({
+      mint: onchainVault.data.usdcMint,
+      owner: expectedAccounts.vaultAuthority,
+      payer: input.adminSigner,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    }),
+    getCreateAssociatedTokenIdempotentInstructionAsync({
+      mint: onchainVault.data.usdcMint,
+      owner: requireEnv("SOLANA_ADMIN_MULTISIG") as Address<string>,
+      payer: input.adminSigner,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    }),
+  ]);
+
+  await sendInstructions(repairInstructions, input.adminSigner, solana);
 }
 
 async function ensureInitialPurchase(input: {

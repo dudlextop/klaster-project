@@ -109,15 +109,6 @@ export async function buildOperatorDepositTransactionPlan({
     ),
   );
 
-  if (isWrappedSolMint(bundle.usdcMint)) {
-    instructions.push(
-      buildWrappedSolUnwrapInstruction({
-        ownerSigner: operatorSigner,
-        tokenAccount: transactionAccounts.operatorUsdcTokenAccount,
-      }),
-    );
-  }
-
   return {
     instructions,
   };
