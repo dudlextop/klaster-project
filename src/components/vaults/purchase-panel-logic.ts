@@ -15,7 +15,7 @@ export function getInitialShareAmount(estimatedAvailableShares: number) {
     return "";
   }
 
-  return String(Math.min(100, estimatedAvailableShares));
+  return String(Math.min(1, estimatedAvailableShares));
 }
 
 export function validatePurchaseQuantity(

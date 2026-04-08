@@ -5,15 +5,15 @@ import {
 } from "@/components/vaults/purchase-panel-logic";
 
 describe("purchase panel quantity validation", () => {
-  it("prefills with the lower of 100 shares or the available supply", () => {
-    expect(getInitialShareAmount(400)).toBe("100");
-    expect(getInitialShareAmount(12)).toBe("12");
+  it("prefills live purchases with one share so devnet buyers stay within a realistic SOL budget", () => {
+    expect(getInitialShareAmount(113)).toBe("1");
+    expect(getInitialShareAmount(12)).toBe("1");
     expect(getInitialShareAmount(0)).toBe("");
   });
 
   it("accepts valid whole-number quantities", () => {
-    expect(validatePurchaseQuantity("5", 100, 98)).toEqual({
-      estimatedCostUsdc: 490,
+    expect(validatePurchaseQuantity("5", 100, 0.15)).toEqual({
+      estimatedCostUsdc: 0.75,
       kind: "valid",
       shares: 5,
     });

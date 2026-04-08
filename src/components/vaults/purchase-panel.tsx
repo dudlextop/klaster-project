@@ -32,6 +32,7 @@ import {
   isWrappedSolMint,
   SOL_WRAP_BUFFER_LAMPORTS,
 } from "@/lib/solana/settlement";
+import { getUserFacingInvestmentErrorMessage } from "@/lib/solana/user-facing-errors";
 import { toSettlementAtomicAmount } from "@/lib/solana/vault-transaction-accounts";
 import {
   createPreferredWalletTransactionSigner,
@@ -166,16 +167,18 @@ function LivePurchasePanel({
       ? toSettlementAtomicAmount(estimatedCost)
       : BigInt(0);
   const walletReady = status === "connected" && session;
-  const hasBalanceData = usesNativeSolSettlement
+  const settlementBalanceReady = usesNativeSolSettlement
     ? solBalance.lamports !== null
     : usdcBalance.balance?.amount !== undefined;
   const hasSufficientBalance =
-    quantityState.kind !== "valid" || !hasBalanceData
+    quantityState.kind !== "valid"
       ? true
-      : usesNativeSolSettlement
-        ? (solBalance.lamports ?? BigInt(0)) >=
-          estimatedCostAtomic + SOL_WRAP_BUFFER_LAMPORTS
-        : (usdcBalance.balance?.amount ?? BigInt(0)) >= estimatedCostAtomic;
+      : !settlementBalanceReady
+        ? false
+        : usesNativeSolSettlement
+          ? (solBalance.lamports ?? BigInt(0)) >=
+            estimatedCostAtomic + SOL_WRAP_BUFFER_LAMPORTS
+          : (usdcBalance.balance?.amount ?? BigInt(0)) >= estimatedCostAtomic;
   const formattedSettlementBalance = usesNativeSolSettlement
     ? solBalance.lamports !== null
       ? formatSolAmount(Number(solBalance.lamports) / 1_000_000_000)
@@ -217,7 +220,8 @@ function LivePurchasePanel({
       });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Investment failed.",
+        getUserFacingInvestmentErrorMessage(error) ??
+          (error instanceof Error ? error.message : "Investment failed."),
       );
     }
   }
@@ -372,6 +376,7 @@ function LivePurchasePanel({
               disabled={
                 isSending ||
                 quantityState.kind !== "valid" ||
+                !settlementBalanceReady ||
                 !hasSufficientBalance
               }
               onClick={() => void handlePurchase()}
@@ -389,10 +394,17 @@ function LivePurchasePanel({
           </div>
         ) : null}
 
-        {!hasSufficientBalance && walletReady ? (
+        {!settlementBalanceReady && walletReady ? (
+          <p className="font-mono text-[10px] text-muted-foreground">
+            Loading connected wallet balance before enabling the purchase rail.
+          </p>
+        ) : null}
+
+        {!hasSufficientBalance && settlementBalanceReady && walletReady ? (
           <p className="font-mono text-[10px] text-warning">
             Connected SOL balance looks lower than the estimated cost plus the
-            temporary account buffer for this quantity.
+            temporary account buffer for this quantity. Lower the share count or
+            top up the wallet before submitting.
           </p>
         ) : null}
 
