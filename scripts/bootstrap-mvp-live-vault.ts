@@ -752,6 +752,7 @@ async function ensureInitialPurchase(input: {
   const purchaseConfig = {
     estimatedAvailableShares: Number(onchainVault.data.remainingPublicShares),
     mode: "live" as const,
+    operatorWalletAddress: onchainVault.data.operator,
     operatorSettlementTokenAccount:
       onchainVault.data.operatorSettlementTokenAccount,
     programAddress: requireEnv("NEXT_PUBLIC_PROGRAM_ID_KLASTER_VAULT"),

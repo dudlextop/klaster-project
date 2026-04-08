@@ -64,6 +64,12 @@ export async function buildPurchaseTransactionPlan({
 
   instructions.push(
     await getCreateAssociatedTokenIdempotentInstructionAsync({
+      mint: purchaseConfig.usdcMint as Address<string>,
+      owner: purchaseConfig.operatorWalletAddress as Address<string>,
+      payer: buyerSigner,
+      tokenProgram: purchaseConfig.usdcTokenProgram as Address<string>,
+    }),
+    await getCreateAssociatedTokenIdempotentInstructionAsync({
       mint: purchaseConfig.shareMint as Address<string>,
       owner: buyerSigner.address as Address<string>,
       payer: buyerSigner,

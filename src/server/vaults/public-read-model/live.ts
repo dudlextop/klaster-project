@@ -41,6 +41,7 @@ async function readOnchainPurchaseConfig(onchainVaultAddress: string | null) {
     );
 
     return {
+      operatorWalletAddress: onchainVault.data.operator,
       operatorSettlementTokenAccount:
         onchainVault.data.operatorSettlementTokenAccount,
       programAddress: publicEnv.programId,
@@ -294,6 +295,7 @@ export async function getLiveListings() {
             ? {
                 estimatedAvailableShares: onchainConfig.remainingPublicShares,
                 mode: "live",
+                operatorWalletAddress: onchainConfig.operatorWalletAddress,
                 operatorSettlementTokenAccount:
                   onchainConfig.operatorSettlementTokenAccount,
                 programAddress: onchainConfig.programAddress,

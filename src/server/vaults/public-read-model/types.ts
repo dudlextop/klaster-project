@@ -57,6 +57,7 @@ export type PurchasePanelConfig =
   | {
       estimatedAvailableShares: number;
       mode: "live";
+      operatorWalletAddress: string;
       operatorSettlementTokenAccount: string;
       programAddress: string;
       shareMint: string;
