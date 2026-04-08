@@ -53,7 +53,7 @@ export function OperatorDepositRail({
     error: sendError,
     isSending,
     reset,
-    send,
+    sendPrepared,
     signature,
     status: sendStatus,
   } = useSendTransaction();
@@ -114,12 +114,14 @@ export function OperatorDepositRail({
         operatorSigner: wrappedSigner.signer,
         solana,
       });
-      const nextSignature = await send({
+      const prepared = await solana.transaction.prepare({
         authority: wrappedSigner.signer,
         feePayer: wrappedSigner.signer,
         instructions: plan.instructions,
-        prepareTransaction: false,
         version: "legacy",
+      });
+      const nextSignature = await sendPrepared(prepared, {
+        commitment: "confirmed",
       });
 
       setSubmittedSignature(nextSignature.toString());

@@ -132,7 +132,7 @@ function LivePurchasePanel({
     error: sendError,
     isSending,
     reset,
-    send,
+    sendPrepared,
     signature,
     status: sendStatus,
   } = useSendTransaction();
@@ -198,13 +198,15 @@ function LivePurchasePanel({
         shares: quantityState.shares,
         solana,
       });
-
-      await send({
+      const prepared = await solana.transaction.prepare({
         authority: wrappedSigner.signer,
         feePayer: wrappedSigner.signer,
         instructions: plan.instructions,
-        prepareTransaction: false,
         version: "legacy",
+      });
+
+      await sendPrepared(prepared, {
+        commitment: "confirmed",
       });
     } catch (error) {
       setErrorMessage(
