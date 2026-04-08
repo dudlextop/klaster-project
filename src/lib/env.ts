@@ -63,10 +63,7 @@ export function getServerEnv(): ServerRuntimeEnv {
     heliusWebhookSecret: readString(process.env.HELIUS_WEBHOOK_SECRET),
     pinataJwt: readString(process.env.PINATA_JWT),
     resendApiKey: readString(process.env.RESEND_API_KEY),
-    settlementMintAddress: readString(
-      process.env.SETTLEMENT_MINT_ADDRESS ?? process.env.USDC_MINT_ADDRESS,
-      DEFAULT_SETTLEMENT_MINT,
-    ),
+    settlementMintAddress: DEFAULT_SETTLEMENT_MINT,
     sessionSecret: readString(process.env.SESSION_SECRET),
     solanaAdminMultisig: readString(process.env.SOLANA_ADMIN_MULTISIG),
     supabasePrivateBucket: readString(process.env.SUPABASE_PRIVATE_BUCKET),

@@ -26,11 +26,11 @@ import {
 
 const CANONICAL_SLUG = "demo-vault";
 const PURCHASE_SHARES = 4;
-const SHARE_PRICE_SOL = 0.15;
-const CAMPAIGN_TARGET_SOL = 18;
-const VAULT_VALUATION_SOL = 60;
+const SHARE_PRICE_SOL = 0.01;
+const CAMPAIGN_TARGET_SOL = 1.2;
+const VAULT_VALUATION_SOL = 4;
 const DEPOSIT_AMOUNT_SOL = "0.75";
-const MIN_BOOTSTRAP_SOL_BALANCE = BigInt(1_500_000_000);
+const MIN_BOOTSTRAP_SOL_BALANCE = BigInt(1_000_000_000);
 const MVP_PROOF_HASH = createHash("sha256")
   .update("klasterai-demo-vault-proof-v1")
   .digest("hex");
@@ -95,11 +95,7 @@ function getClusterMoniker() {
 }
 
 function getSettlementMintAddress() {
-  return (
-    process.env.SETTLEMENT_MINT_ADDRESS?.trim() ||
-    process.env.USDC_MINT_ADDRESS?.trim() ||
-    WRAPPED_SOL_MINT
-  );
+  return WRAPPED_SOL_MINT;
 }
 
 function runSolana(args: string[]) {

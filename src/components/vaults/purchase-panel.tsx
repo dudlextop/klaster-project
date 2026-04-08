@@ -166,6 +166,8 @@ function LivePurchasePanel({
     quantityState.kind === "valid"
       ? toSettlementAtomicAmount(estimatedCost)
       : BigInt(0);
+  const minimumRequiredLamports =
+    estimatedCostAtomic + SOL_WRAP_BUFFER_LAMPORTS;
   const walletReady = status === "connected" && session;
   const settlementBalanceReady = usesNativeSolSettlement
     ? solBalance.lamports !== null
@@ -298,6 +300,16 @@ function LivePurchasePanel({
                 : "Enter a valid quantity"}
             </span>
           </div>
+          {usesNativeSolSettlement && quantityState.kind === "valid" ? (
+            <div className="mt-2 flex items-center justify-between gap-3 border-t border-border-subtle pt-2">
+              <span className="text-muted-foreground">Required wallet SOL</span>
+              <span className="font-semibold tabular-nums text-foreground">
+                {formatSolAmount(
+                  Number(minimumRequiredLamports) / 1_000_000_000,
+                )}
+              </span>
+            </div>
+          ) : null}
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
             Buyer shares mint directly to the connected wallet. Primary sale
             proceeds do not enter the claimable revenue pool, and net yield is
